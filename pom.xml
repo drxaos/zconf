@@ -9,14 +9,8 @@
     <dependencies>
         <dependency>
             <groupId>org.rapidoid</groupId>
-            <artifactId>rapidoid-http-server</artifactId>
+            <artifactId>rapidoid-quick</artifactId>
             <version>5.5.4</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.rapidoid</groupId>
-            <artifactId>rapidoid-rest</artifactId>
-            <version>5.0.12</version>
         </dependency>
 
         <dependency>
