@@ -1,0 +1,87 @@
+<style>
+    body, html {
+        background-color: black;
+        color: lightgray;
+        font-size: 20px;
+    }
+</style>
+
+<h2>Зайцы и капуста</h2>
+<h3>Пример игры</h3>
+
+<img src="/scr.png"/>
+<ul style="list-style-type: none;">
+    <li><pre style="display: inline; color: red">#</pre> - препятствие</li>
+    <li><pre style="display: inline; color: lime">$</pre> - капуста</li>
+    <li><pre style="display: inline; color: green">.</pre> - свободное место</li>
+    <li><pre style="display: inline; color: white">Z</pre> - белый заяц</li>
+    <li><pre style="display: inline; color: darkgray">Z</pre> - серый заяц</li>
+    <li><pre style="display: inline; color: white">O</pre> - нора белых зайцев</li>
+    <li><pre style="display: inline; color: darkgray">O</pre> - нора серых зайцев</li>
+</ul>
+
+<h3>Правила</h3>
+<p>
+    Цель игры - затолкать в нору своей команды как можно больше капусты.
+</p>
+<p>
+    Поле циклическое.
+    Зайцы могут ходить в 4 направлениях.
+    Заяц может двигать (толкать) капусту и других зайцев.
+    Через норы зайцы перепрыгивают.
+</p>
+<p>
+    После каждого действия нужна перезарядка.
+    Например если заяц двигается на пустую клетку,
+    то API вернет 100 - это значит что следующий запрос можно отправить не раньше чем через 100мс.
+    Толкание предметов отнимает 100 + 50*N (где N - количество предметов).
+    А если заяц врежется в дерево, то перезарядка будет 500мс.
+</p>
+
+<h3>API</h3>
+<p>
+    Каждый запрос возвращает валидный JSON:
+    либо массив (например "[1, 2, 3]"), либо число (например "250" или "-1")
+</p>
+<p>
+    Если заяц еще перезаряжается, то на любой запрос будет возвращено значение "-1".
+</p>
+<ul style="list-style-type: none;">
+    <li>
+        <code style="color: cornflowerblue">/size/&lt;ключ&gt;</code> - возвращает массив размерностей поля (например "[50, 25]" - 50 клеток в ширину и 25 в высоту)
+    </li>
+    <li>
+        <code style="color: cornflowerblue">/look/&lt;ключ&gt;</code> - возвращает массив всех клеток поля (например "[0, 0, 1, 1, 0, 2, 155, ...]")
+        <ul style="list-style-type: none;">
+            <li>Клетки каждой строки идут друг за другом, строки ничем не разделяются</li>
+            <li>После вызова перезарядка занимает 100мс</li>
+            <li>Если заяц еще перезаряжается, то будет возвращено значение "-1"</li>
+            <li><code>0</code> - пустая клетка</li>
+            <li><code>1</code> - препятствие</li>
+            <li><code>2</code> - капуста</li>
+            <li><code>10</code> - нора белых зайцев</li>
+            <li><code>20</code> - нора серых зайцев</li>
+            <li><code>100-199</code> - белый заяц</li>
+            <li><code>200-299</code> - серый заяц</li>
+        </ul>
+    </li>
+    <li>
+        <code style="color: cornflowerblue">/up/&lt;ключ&gt;</code> - переместить зайца на клетку вверх, возвращает время перезарядки или "-1".
+    </li>
+    <li>
+        <code style="color: cornflowerblue">/right/&lt;ключ&gt;</code> - переместить зайца на клетку вправо, возвращает время перезарядки или "-1".
+    </li>
+    <li>
+        <code style="color: cornflowerblue">/down/&lt;ключ&gt;</code> - переместить зайца на клетку вниз, возвращает время перезарядки или "-1".
+    </li>
+    <li>
+        <code style="color: cornflowerblue">/left/&lt;ключ&gt;</code> - переместить зайца на клетку влево, возвращает время перезарядки или "-1".
+    </li>
+    <li>
+        <code style="color: cornflowerblue">/score</code> - возвращает массив очков белой и серой команды (например "[2, 6]" - 2 очка у белой команды и 6 у серой)
+    </li>
+</ul>
+
+<p>
+    <a href="/game.html">Просмотр игры</a> Использует <code style="color: cornflowerblue">/look/&lt;ключ&gt;</code> раз в 300мс!
+</p>

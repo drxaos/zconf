@@ -7,26 +7,27 @@ import java.util.concurrent.atomic.AtomicLongArray;
 
 public class Game {
 
-    public static final int H = 5;
-    public static final int W = 5;
-
     public static final int EMPTY = 0;
     public static final int TREE = 1;
     public static final int TREE_BUMP = -1;
-    public static final int Q = 2;
+    public static final int G = 2;
     public static final int O1 = 10;
     public static final int O2 = 20;
     public static final int Z = 100;
     public static final int OBSERVER = 300;
 
-    public static final int WAIT_ERROR = -100;
+    public static final int WAIT_ERROR = -1;
     public static final int WAIT_STEP = 100;
     public static final int WAIT_PUSH = 50;
     public static final int WAIT_TREE = 500;
     public static final int WAIT_LOOK = 100;
 
-    AtomicIntegerArray map = new AtomicIntegerArray(W * H);
-    AtomicIntegerArray lock = new AtomicIntegerArray(W * H);
+
+    final int H;
+    final int W;
+
+    AtomicIntegerArray map;
+    AtomicIntegerArray lock;
 
     AtomicInteger score1 = new AtomicInteger(0);
     AtomicInteger score2 = new AtomicInteger(0);
@@ -40,8 +41,40 @@ public class Game {
     AtomicBoolean observerLock = new AtomicBoolean(false);
     String snapshot = "";
 
+    public Game(int h, int w) {
+        H = h;
+        W = w;
+
+        map = new AtomicIntegerArray(W * H);
+        lock = new AtomicIntegerArray(W * H);
+    }
+
+    public int getW() {
+        return W;
+    }
+
+    public int getH() {
+        return H;
+    }
+
+    public int getScore1() {
+        return score1.get();
+    }
+
+    public int getScore2() {
+        return score2.get();
+    }
+
     public int xytoi(int x, int y) {
-        return (x % W) + (y % H) * W;
+        return ((x + W) % W) + ((y + H) % H) * W;
+    }
+
+    public int xtox(int x) {
+        return x < 0 ? x + W : x > W ? x - W : x;
+    }
+
+    public int ytoy(int y) {
+        return y < 0 ? y + H : y > H ? y - H : y;
     }
 
     public int idtoi(int id) {
@@ -91,25 +124,28 @@ public class Game {
             }
         }
 
-        map.set(xy, EMPTY);
         int chain = push(id, x + dx, y + dy, dx, dy, id, 0);
 
         int wait;
         if (chain >= 0) {
-            map.set(xytoi(x + dx, y + dy), id);
-            zx.set(i, x + dx);
-            zy.set(i, y + dy);
             wait = WAIT_STEP + WAIT_PUSH * chain;
+            map.set(xy, EMPTY);
         } else {
-            map.set(xy, id);
             wait = WAIT_TREE;
         }
 
         lock.set(xy, 0);
-
         zwait.set(i, System.currentTimeMillis() + wait);
         zactive.decrementAndGet();
         return "" + wait;
+    }
+
+    void zupdate(int id, int x, int y) {
+        if (id >= Z) {
+            int zi = idtoi(id);
+            zx.set(zi, xtox(x));
+            zy.set(zi, ytoy(y));
+        }
     }
 
     public int push(int id, int x, int y, int dx, int dy, int pushObj, int chain) {
@@ -125,55 +161,52 @@ public class Game {
         switch (obj) {
             case EMPTY:
                 map.set(xy, pushObj);
-                lock.set(xy, 0);
+                zupdate(pushObj, x, y);
+                lock.set(xy, 0); // unlock
                 return chain;
             case TREE:
-                lock.set(xy, 0);
+                lock.set(xy, 0); // unlock
                 return TREE_BUMP;
             case O1:
-                if (pushObj == Q) {
-                    lock.set(xy, 0);
+                lock.set(xy, 0); // unlock
+                if (pushObj == G) {
                     if (team(id) == 1) {
                         zscore.incrementAndGet(idtoi(id));
                     }
                     score1.incrementAndGet();
                     return chain;
                 }
-                lock.set(xy, 0);
+
+                // if Z
                 return push(id, x + dx, y + dy, dx, dy, pushObj, chain);
             case O2:
-                if (pushObj == Q) {
-                    lock.set(xy, 0);
+                lock.set(xy, 0);
+                if (pushObj == G) {
                     if (team(id) == 2) {
                         zscore.incrementAndGet(idtoi(id));
                     }
                     score2.incrementAndGet();
                     return chain;
                 }
-                lock.set(xy, 0);
+
+                // if Z
                 return push(id, x + dx, y + dy, dx, dy, pushObj, chain);
-            case Q:
-                int next = push(id, x + dx, y + dy, dx, dy, Q, chain + 1);
+            case G:
+                int next = push(id, x + dx, y + dy, dx, dy, G, chain + 1);
                 if (next >= 0) {
                     map.set(xy, pushObj);
+                    zupdate(pushObj, x, y);
                 }
                 lock.set(xy, 0);
                 return next;
             default:
-                if (obj >= Z) {
-                    int nextz = push(id, x + dx, y + dy, dx, dy, obj, chain + 1);
-                    if (nextz >= 0) {
-                        int zi = idtoi(obj);
-                        zx.set(zi, x + dx);
-                        zy.set(zi, y + dy);
-                        map.set(xy, pushObj);
-                    }
-                    lock.set(xy, 0);
-                    return nextz;
+                int nextz = push(id, x + dx, y + dy, dx, dy, obj, chain + 1);
+                if (nextz >= 0) {
+                    map.set(xy, pushObj);
+                    zupdate(pushObj, x, y);
                 }
-                System.out.println("ERROR");
                 lock.set(xy, 0);
-                return 0;
+                return nextz;
         }
     }
 

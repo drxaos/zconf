@@ -1,0 +1,125 @@
+<div>
+<pre id="map" style="font-size: 20px; color: green">
+<span style="color: red">L</span>OA<span style="color: yellow">D</span>I<span style="color: lime">N</span>G.<span
+        style="color: #004400">.</span><span style="color: #002200">.</span>
+</pre>
+</div>
+
+<style>
+    body, html {
+        background-color: black;
+    }
+
+    div {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+</style>
+
+<script>
+    var ajax = function (url, callback) {
+        var xmlHTTP = new XMLHttpRequest();
+        xmlHTTP.onreadystatechange = function () {
+            if (this.readyState === 4 && this.status === 200)
+                callback(this.responseText);
+        };
+        xmlHTTP.open("GET", url, true);
+        xmlHTTP.send();
+    };
+
+    var w = 0, h = 0, s1 = 0, s2 = 0;
+
+    var p = document.getElementById("map");
+    setInterval(function () {
+
+        if (w === 0 || h === 0) {
+            ajax("/size/300", function (data) {
+                var d = JSON.parse(data);
+                w = d[0];
+                h = d[1];
+            });
+            return;
+        }
+        ajax("/score", function (data) {
+            var d = JSON.parse(data);
+            s1 = d[0];
+            s2 = d[1];
+        });
+
+        ajax("/look/300", function (data) {
+            var map = JSON.parse(data);
+            if (!(map instanceof Array)) {
+                return;
+            }
+
+            var s = "";
+            s += "╓";
+            for (var x = 0; x < w; x++) {
+                s += "─";
+            }
+            s += "╥──────────[<span style='color: lime'>Зайцы и капуста</span>]──────────╖";
+
+            s += "\n";
+            for (var y = 0; y < h; y++) {
+                s += "║";
+                for (var x = 0; x < w; x++) {
+
+                    var xy = x + y * w;
+                    var o = map[xy];
+                    switch (o) {
+                        case 0:
+                            s += ".";
+                            break;
+                        case 1:
+                            s += "<span style='color: red;'>#</span>";
+                            break;
+                        case 2:
+                            s += "<span style='color: lime;'>$</span>";
+                            break;
+                        case 10:
+                            s += "<span style='color: white;'>O</span>";
+                            break;
+                        case 20:
+                            s += "<span style='color: darkgray;'>O</span>";
+                            break;
+                        default:
+                            if (o >= 100 && o < 200) {
+                                s += "<span style='color: white;'>Z</span>";
+                            }
+                            if (o >= 200 && o < 300) {
+                                s += "<span style='color: darkgray;'>Z</span>";
+                            }
+                            break;
+                    }
+
+                }
+                s += "║";
+
+                if (y === 1 && s1 >= s2 || y === 2 && s2 > s1) {
+                    s += "  <span style='color: white'>БЕЛЫЕ</span>  <span style='color: lime'>" + s1 + "</span>"
+                }
+                if (y === 1 && s1 < s2 || y === 2 && s2 <= s1) {
+                    s += "  <span style='color: darkgray'>СЕРЫЕ</span>  <span style='color: lime'>" + s2 + "</span>"
+                }
+                var text = s.replace(/(<([^>]+)>)/ig, "");
+                var spaces = text.indexOf("\n") - (text.length - text.lastIndexOf("\n"));
+                for (var i = 0; i < spaces; i++) {
+                    s += " ";
+                }
+                s += "║\n";
+            }
+
+            s += "╙";
+            for (var x = 0; x < w; x++) {
+                s += "─";
+            }
+            s += "╨─────────────────────────────────────╜";
+
+            p.innerHTML = s;
+        });
+
+    }, 300);
+</script>
+
