@@ -9,22 +9,8 @@
     <dependencies>
         <dependency>
             <groupId>org.rapidoid</groupId>
-            <artifactId>rapidoid-quick</artifactId>
+            <artifactId>rapidoid-http-server</artifactId>
             <version>5.5.4</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.rapidoid</groupId>
-            <artifactId>rapidoid-test-commons</artifactId>
-            <version>5.5.4</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 

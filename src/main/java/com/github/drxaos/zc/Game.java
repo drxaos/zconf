@@ -1,5 +1,7 @@
-package com.example;
+package com.github.drxaos.zc;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
@@ -22,28 +24,29 @@ public class Game {
     public static final int WAIT_TREE = 500;
     public static final int WAIT_LOOK = 100;
 
+    protected Map<String, Integer> keys = new HashMap<>();
 
-    final int H;
-    final int W;
+    protected final int H;
+    protected final int W;
 
-    AtomicIntegerArray map;
-    AtomicIntegerArray lock;
+    protected AtomicIntegerArray map;
+    protected AtomicIntegerArray lock;
 
-    AtomicInteger score1 = new AtomicInteger(0);
-    AtomicInteger score2 = new AtomicInteger(0);
+    protected AtomicInteger score1 = new AtomicInteger(0);
+    protected AtomicInteger score2 = new AtomicInteger(0);
 
-    AtomicIntegerArray zx = new AtomicIntegerArray(200);
-    AtomicIntegerArray zy = new AtomicIntegerArray(200);
-    AtomicIntegerArray zscore = new AtomicIntegerArray(200);
-    AtomicLongArray zwait = new AtomicLongArray(201);
-    AtomicInteger zactive = new AtomicInteger(0);
+    protected AtomicIntegerArray zx = new AtomicIntegerArray(200);
+    protected AtomicIntegerArray zy = new AtomicIntegerArray(200);
+    protected AtomicIntegerArray zscore = new AtomicIntegerArray(200);
+    protected AtomicLongArray zwait = new AtomicLongArray(201);
+    protected AtomicInteger zactive = new AtomicInteger(0);
 
-    AtomicBoolean observerLock = new AtomicBoolean(false);
-    String snapshot = "";
+    protected AtomicBoolean observerLock = new AtomicBoolean(false);
+    protected String snapshot = "";
 
-    public Game(int h, int w) {
-        H = h;
+    public Game(int w, int h) {
         W = w;
+        H = h;
 
         map = new AtomicIntegerArray(W * H);
         lock = new AtomicIntegerArray(W * H);
@@ -65,27 +68,31 @@ public class Game {
         return score2.get();
     }
 
-    public int xytoi(int x, int y) {
+    protected int xytoi(int x, int y) {
         return ((x + W) % W) + ((y + H) % H) * W;
     }
 
-    public int xtox(int x) {
+    protected int xtox(int x) {
         return x < 0 ? x + W : x > W ? x - W : x;
     }
 
-    public int ytoy(int y) {
+    protected int ytoy(int y) {
         return y < 0 ? y + H : y > H ? y - H : y;
     }
 
-    public int idtoi(int id) {
+    protected int idtoi(int id) {
         return id - Z;
     }
 
-    public int team(int id) { // 1/2
+    protected int team(int id) { // 1/2
         return id / 100;
     }
 
     public String move(int id, int dx, int dy) {
+
+        if (id < Z || id >= OBSERVER) {
+            return "" + WAIT_ERROR;
+        }
 
         int i, x, y, xy;
         i = idtoi(id);
@@ -140,7 +147,7 @@ public class Game {
         return "" + wait;
     }
 
-    void zupdate(int id, int x, int y) {
+    protected void zupdate(int id, int x, int y) {
         if (id >= Z) {
             int zi = idtoi(id);
             zx.set(zi, xtox(x));
@@ -148,7 +155,7 @@ public class Game {
         }
     }
 
-    public int push(int id, int x, int y, int dx, int dy, int pushObj, int chain) {
+    protected int push(int id, int x, int y, int dx, int dy, int pushObj, int chain) {
         int xy = xytoi(x, y);
         if (lock.get(xy) == id) {
             // cycle
@@ -243,4 +250,13 @@ public class Game {
             zy.set(i, y);
         }
     }
+
+    public void puKey(String key, Integer id) {
+        keys.put(key, id);
+    }
+
+    public int auth(String key) {
+        return keys.getOrDefault(key, -1);
+    }
+
 }

@@ -16,6 +16,10 @@
         left: 50%;
         transform: translate(-50%, -50%);
     }
+
+    .active {
+        outline: 1px solid gold;
+    }
 </style>
 
 <script>
@@ -23,32 +27,102 @@
         var xmlHTTP = new XMLHttpRequest();
         xmlHTTP.onreadystatechange = function () {
             if (this.readyState === 4 && this.status === 200)
-                callback(this.responseText);
+                callback && callback(this.responseText);
         };
         xmlHTTP.open("GET", url, true);
         xmlHTTP.send();
     };
 
-    var w = 0, h = 0, s1 = 0, s2 = 0;
+    var key = "";
+    var w = 0, h = 0, s1 = 0, s2 = 0, id = 0, kd = 0;
+
+    if (document.addEventListener) {
+        document.addEventListener("keydown", keyCapt, false);
+    } else {
+        document.attachEvent("onkeydown", keyCapt);
+    }
+
+    function keyCapt(e) {
+        if (!key || id === 0 || w === 0 || h === 0) {
+            return true;
+        }
+        if (typeof window.event != "undefined") {
+            e = window.event;
+        }
+        if (e.type == "keydown") {
+            if (e.keyCode >= 37 && e.keyCode <= 40) {
+                kd = e.keyCode;
+            } else {
+                return true;
+            }
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+    }
 
     var p = document.getElementById("map");
+
     setInterval(function () {
 
+        var k = document.getElementById("key");
+
+        if (!key && !k) {
+            var s = "";
+            s += "╓─────[API ACCESS]─────╖\n";
+            s += "║                      ║\n";
+            s += "║ KEY [" +
+                "<input autofocus id='key' type='password' maxlength='14' style='width: 10.54rem;height: 20px;padding:0;border:none;outline:none;font-size: 20px;color: green;background-color: #111;font-family:Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;'/>" +
+                "] ║\n";
+            s += "║                      ║\n";
+            s += "╙──────────────────────╜\n";
+            p.innerHTML = s;
+            return;
+        }
+
+        if (!key) {
+            var kv = k.value;
+            if (kv && kv.length > 0) {
+                ajax("/auth/" + kv, function (data) {
+                    var d = JSON.parse(data);
+                    if (d > 0) {
+                        key = kv;
+                        id = d;
+                    }
+                });
+            }
+            return;
+        }
+
         if (w === 0 || h === 0) {
-            ajax("/size/300", function (data) {
+            ajax("/size/" + key, function (data) {
                 var d = JSON.parse(data);
                 w = d[0];
                 h = d[1];
             });
             return;
         }
-        ajax("/score", function (data) {
+        ajax("/score/" + key, function (data) {
             var d = JSON.parse(data);
             s1 = d[0];
             s2 = d[1];
         });
 
-        ajax("/look/300", function (data) {
+        if (kd > 0) {
+            if (kd === 37) {
+                ajax("/left/" + key);
+            } else if (kd === 38) {
+                ajax("/up/" + key);
+            } else if (kd === 39) {
+                ajax("/right/" + key);
+            } else if (kd === 40) {
+                ajax("/down/" + key);
+            }
+            kd = 0;
+            return;
+        }
+
+        ajax("/look/" + key, function (data) {
             var map = JSON.parse(data);
             if (!(map instanceof Array)) {
                 return;
@@ -56,15 +130,17 @@
 
             var s = "";
             s += "╓";
-            for (var x = 0; x < w; x++) {
+
+            var x, y;
+            for (x = 0; x < w; x++) {
                 s += "─";
             }
             s += "╥──────────[<span style='color: lime'>Зайцы и капуста</span>]──────────╖";
 
             s += "\n";
-            for (var y = 0; y < h; y++) {
+            for (y = 0; y < h; y++) {
                 s += "║";
-                for (var x = 0; x < w; x++) {
+                for (x = 0; x < w; x++) {
 
                     var xy = x + y * w;
                     var o = map[xy];
@@ -86,10 +162,9 @@
                             break;
                         default:
                             if (o >= 100 && o < 200) {
-                                s += "<span style='color: white;'>Z</span>";
-                            }
-                            if (o >= 200 && o < 300) {
-                                s += "<span style='color: darkgray;'>Z</span>";
+                                s += "<span style='color: white;' " + (o === id ? 'class="active"' : '') + ">Z</span>";
+                            } else if (o >= 200 && o < 300) {
+                                s += "<span style='color: darkgray;' " + (o === id ? 'class="active"' : '') + ">Z</span>";
                             }
                             break;
                     }
@@ -112,14 +187,13 @@
             }
 
             s += "╙";
-            for (var x = 0; x < w; x++) {
+            for (x = 0; x < w; x++) {
                 s += "─";
             }
             s += "╨─────────────────────────────────────╜";
 
             p.innerHTML = s;
         });
-
-    }, 300);
+    }, 200);
 </script>
 
