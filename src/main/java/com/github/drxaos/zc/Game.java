@@ -43,6 +43,7 @@ public class Game {
 
     protected AtomicBoolean observerLock = new AtomicBoolean(false);
     protected String snapshot = "";
+    protected String rating = "";
 
     public Game(int w, int h) {
         W = w;
@@ -234,10 +235,15 @@ public class Game {
         return snapshot;
     }
 
+    public String getRating() {
+        return rating;
+    }
+
     public void snap() {
         observerLock.set(true);
         while (zactive.get() > 0) ;
         snapshot = map.toString();
+        rating = zscore.toString();
         observerLock.set(false);
     }
 

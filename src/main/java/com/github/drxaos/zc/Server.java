@@ -65,13 +65,27 @@ public class Server implements Runnable {
         });
 
         setup.get("/score/{key}").plain((String key) -> {
-            // [Score1, Score2]
+            // [ScoreWhite, ScoreGray]
             try {
                 int id = game.auth(key);
                 if (id < 0) {
                     return "-2";
                 }
                 return "[" + game.getScore1() + ", " + game.getScore2() + "]";
+            } catch (Exception e) {
+                e.printStackTrace();
+                return "-1";
+            }
+        });
+
+        setup.get("/rating/{key}").plain((String key) -> {
+            // [Score100, Score101, Score102, ... , Score299]
+            try {
+                int id = game.auth(key);
+                if (id < 0) {
+                    return "-2";
+                }
+                return game.getRating();
             } catch (Exception e) {
                 e.printStackTrace();
                 return "-1";

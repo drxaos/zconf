@@ -36,26 +36,29 @@ public class DemoLevel {
                 game.set(p.x, p.y, Game.G);
                 g++;
             } else {
-                StringBuilder paswd = new StringBuilder();
-                for (int i = 0; i < 10; i++) {
-                    paswd.append((char) ('A' + (int) (r.nextDouble() * 26)));
+                String paswd = null;
+                while (paswd == null || game.auth(paswd) > 0) {
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < 10; i++) {
+                        sb.append((char) ('A' + (int) (r.nextDouble() * 26)));
+                    }
+                    paswd = sb.toString();
                 }
-
                 if (z1 < 20) {
-                    game.puKey(paswd.toString(), Game.Z + z1);
+                    game.puKey(paswd, Game.Z + z1);
                     if (z1 == 0) {
-                        System.out.println("Z100: " + paswd.toString());
+                        System.out.println("Z100: " + paswd);
                     }
                     game.set(p.x, p.y, Game.Z + z1++);
                 } else if (z2 < 20) {
-                    game.puKey(paswd.toString(), Game.Z * 2 + z1);
+                    game.puKey(paswd, Game.Z * 2 + z2);
                     if (z2 == 0) {
-                        System.out.println("Z200: " + paswd.toString());
+                        System.out.println("Z200: " + paswd);
                     }
                     game.set(p.x, p.y, Game.Z + 100 + z2++);
                 } else {
-                    game.puKey(paswd.toString(), Game.OBSERVER);
-                    System.out.println("OBSERVER: " + paswd.toString());
+                    game.puKey(paswd, Game.OBSERVER);
+                    System.out.println("OBSERVER: " + paswd);
                 }
             }
         }

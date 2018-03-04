@@ -35,6 +35,7 @@
 
     var key = "";
     var w = 0, h = 0, s1 = 0, s2 = 0, id = 0, kd = 0;
+    var rating = [];
 
     if (document.addEventListener) {
         document.addEventListener("keydown", keyCapt, false);
@@ -107,6 +108,16 @@
             s1 = d[0];
             s2 = d[1];
         });
+        ajax("/rating/" + key, function (data) {
+            var d = JSON.parse(data);
+            rating = d.map(function (scor, idx) {
+                return {z: idx + 100, s: scor};
+            }).filter(function (e) {
+                return e.s > 0;
+            }).sort(function (a, b) {
+                return a.s === b.s ? a.z - b.z : b.s - a.s;
+            });
+        });
 
         if (kd > 0) {
             if (kd === 37) {
@@ -135,7 +146,7 @@
             for (x = 0; x < w; x++) {
                 s += "─";
             }
-            s += "╥──────────[<span style='color: lime'>Зайцы и капуста</span>]──────────╖";
+            s += "╥──────[<span style='color: lime'>Зайцы и капуста</span>]──────╖";
 
             s += "\n";
             for (y = 0; y < h; y++) {
@@ -178,6 +189,9 @@
                 if (y === 1 && s1 < s2 || y === 2 && s2 <= s1) {
                     s += "  <span style='color: darkgray'>СЕРЫЕ</span>  <span style='color: lime'>" + s2 + "</span>"
                 }
+                if (y >= 4 && rating.length > y - 4) {
+                    s += "  <span style='color: " + (rating[y - 4].z < 200 ? "white" : "darkgray") + "'>Z" + rating[y - 4].z + "</span>  <span style='color: lime'>" + rating[y - 4].s + "</span>";
+                }
                 var text = s.replace(/(<([^>]+)>)/ig, "");
                 var spaces = text.indexOf("\n") - (text.length - text.lastIndexOf("\n"));
                 for (var i = 0; i < spaces; i++) {
@@ -187,10 +201,18 @@
             }
 
             s += "╙";
+
             for (x = 0; x < w; x++) {
                 s += "─";
             }
-            s += "╨─────────────────────────────────────╜";
+            s += "╨";
+
+            var text = s.replace(/(<([^>]+)>)/ig, "");
+            var spaces = text.indexOf("\n") - (text.length - text.lastIndexOf("\n"));
+            for (var i = 0; i < spaces; i++) {
+                s += "─";
+            }
+            s += "╜";
 
             p.innerHTML = s;
         });
