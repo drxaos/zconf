@@ -25,6 +25,7 @@ public class Game {
     public static final int WAIT_LOOK = 100;
 
     protected Map<String, Integer> keys = new HashMap<>();
+    protected Map<Integer, String> names = new HashMap<>();
 
     protected final int H;
     protected final int W;
@@ -257,8 +258,12 @@ public class Game {
         }
     }
 
-    public void puKey(String key, Integer id) {
+    public void putKey(String key, Integer id) {
         keys.put(key, id);
+    }
+
+    public void putName(Integer id, String name) {
+        names.put(id, name);
     }
 
     public int auth(String key) {

@@ -1,22 +1,64 @@
 package com.github.drxaos.zc;
 
 import java.awt.*;
+import java.io.File;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.*;
+import java.util.List;
 
 public class DemoLevel {
 
     public static void main(String[] args) throws Exception {
 
-        Game game = new Game(50, 25);
+        int oCount = 1 + 1;
+        int z1Count = 20;
+        int z2Count = 20;
+        int tCount = 50;
+        int gCount = 20;
+        int width = 50;
+        int height = 25;
+
+        List<String> config = Files.readAllLines(new File("config").toPath(), Charset.defaultCharset());
+        while (true) {
+            String line = config.remove(0);
+            if (line == null || line.trim().isEmpty()) {
+                continue;
+            }
+            if (line.equals("players")) {
+                break;
+            }
+            String[] cfg = line.split(" ", 2);
+            if (cfg[0].equals("w")) {
+                width = Integer.parseInt(cfg[1]);
+            }
+            if (cfg[0].equals("h")) {
+                height = Integer.parseInt(cfg[1]);
+            }
+            if (cfg[0].equals("t")) {
+                tCount = Integer.parseInt(cfg[1]);
+            }
+            if (cfg[0].equals("g")) {
+                gCount = Integer.parseInt(cfg[1]);
+            }
+            if (cfg[0].equals("z1")) {
+                z1Count = Integer.parseInt(cfg[1]);
+            }
+            if (cfg[0].equals("z2")) {
+                z2Count = Integer.parseInt(cfg[1]);
+            }
+        }
+
+        Game game = new Game(width, height);
 
         Set<Point> points = new HashSet<>();
         Point o1, o2;
         Random r = new Random(System.currentTimeMillis());
-        points.add(o1 = new Point((int) (r.nextDouble() * 10) + 10, (int) (r.nextDouble() * 5) + 5));
-        points.add(o2 = new Point((int) (r.nextDouble() * 10) + 30, (int) (r.nextDouble() * 5) + 15));
+        points.add(o1 = new Point((int) (r.nextDouble() * width / 6) + width / 6, (int) (r.nextDouble() * height / 6) + height / 6));
+        points.add(o2 = new Point((int) (r.nextDouble() * width / 6) + width / 6 * 4, (int) (r.nextDouble() * height / 6) + height / 6 * 4));
 
-        while (points.size() < 50 + 50 + 20 + 20 + 1 + 1 + 1) {
-            points.add(new Point((int) (r.nextDouble() * 50), (int) (r.nextDouble() * 25)));
+        while (points.size() < gCount + tCount + z2Count + z2Count + oCount) {
+            points.add(new Point((int) (r.nextDouble() * width), (int) (r.nextDouble() * height)));
         }
 
         game.set(o1.x, o1.y, Game.O1);
@@ -29,38 +71,28 @@ public class DemoLevel {
 
         int t = 0, g = 0, z1 = 0, z2 = 0;
         for (Point p : list) {
-            if (t < 50) {
+            if (t < tCount) {
                 game.set(p.x, p.y, Game.TREE);
                 t++;
-            } else if (g < 50) {
+            } else if (g < gCount) {
                 game.set(p.x, p.y, Game.G);
                 g++;
-            } else {
-                String paswd = null;
-                while (paswd == null || game.auth(paswd) > 0) {
-                    StringBuilder sb = new StringBuilder();
-                    for (int i = 0; i < 10; i++) {
-                        sb.append((char) ('A' + (int) (r.nextDouble() * 26)));
-                    }
-                    paswd = sb.toString();
-                }
-                if (z1 < 20) {
-                    game.puKey(paswd, Game.Z + z1);
-                    if (z1 == 0) {
-                        System.out.println("Z100: " + paswd);
-                    }
-                    game.set(p.x, p.y, Game.Z + z1++);
-                } else if (z2 < 20) {
-                    game.puKey(paswd, Game.Z * 2 + z2);
-                    if (z2 == 0) {
-                        System.out.println("Z200: " + paswd);
-                    }
-                    game.set(p.x, p.y, Game.Z + 100 + z2++);
-                } else {
-                    game.puKey(paswd, Game.OBSERVER);
-                    System.out.println("OBSERVER: " + paswd);
-                }
+            } else if (z1 < z1Count) {
+                game.set(p.x, p.y, Game.Z + z1++);
+            } else if (z2 < z2Count) {
+                game.set(p.x, p.y, Game.Z + 100 + z2++);
             }
+        }
+
+        while (config.size() > 0) {
+            String line = config.remove(0);
+            if (line == null || line.trim().isEmpty()) {
+                continue;
+            }
+            String[] cfg = line.split(" ", 3);
+            int player = Integer.parseInt(cfg[0]);
+            game.putKey(cfg[1], player);
+            game.putName(player, cfg[2]);
         }
 
         new Server(game).port(9999).start();
