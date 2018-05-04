@@ -19,8 +19,8 @@ public class TestLevel {
             points.add(new Point((int) (r.nextDouble() * 50), (int) (r.nextDouble() * 25)));
         }
 
-        game.set(o1.x, o1.y, Game.O1);
-        game.set(o2.x, o2.y, Game.O2);
+        game.set(o1.x, o1.y, Game.O);
+        game.set(o2.x, o2.y, Game.O);
         points.remove(o1);
         points.remove(o2);
 

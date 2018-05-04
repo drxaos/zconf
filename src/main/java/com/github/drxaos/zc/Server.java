@@ -43,7 +43,7 @@ public class Server implements Runnable {
         Setup setup = Setup.create("srv" + uid++).address(address).port(port);
         setup.config().sub("c3p0").set("initialPoolSize", 100);
         setup.config().sub("c3p0").set("minPoolSize", 100);
-        setup.config().sub("c3p0").set("maxPoolSize", 300);
+        setup.config().sub("c3p0").set("maxPoolSize", 1000);
         setup.config().sub("net").set("bufSizeKB", 1);
         setup.config().sub("http").set("timeout", 100);
         setup.config().sub("http").set("timeoutResolution", 100);
@@ -71,7 +71,7 @@ public class Server implements Runnable {
                 if (id < 0) {
                     return "-2";
                 }
-                return "[" + game.getScore1() + ", " + game.getScore2() + "]";
+                return "[0,0]";//"[" + game.getScoreCurrent() + ", " + game.getScore() + "]";
             } catch (Exception e) {
                 e.printStackTrace();
                 return "-1";
@@ -114,19 +114,19 @@ public class Server implements Runnable {
         });
 
         setup.get("/look/{key}").plain((String key) -> {
-            // [map] OR -1
+            // [map] OR -3
+//            long start = System.nanoTime();
             try {
                 int id = game.auth(key);
                 if (id < 0) {
-                    return "-2";
+                    return "" + Game.ANS_ERROR;
                 }
-//            long start = System.nanoTime();
-                String map = game.look(id);
-//            System.out.println(System.nanoTime() - start);
-                return map;
+                return game.look(id);
             } catch (Exception e) {
                 e.printStackTrace();
-                return "-1";
+                return "" + Game.ANS_ERROR;
+            } finally {
+//                System.out.println(System.nanoTime() - start);
             }
         });
 

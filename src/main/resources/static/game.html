@@ -121,21 +121,43 @@
 
         if (kd > 0) {
             if (kd === 37) {
-                ajax("/left/" + key);
+                console.log("left");
+                ajax("/left/" + key, function (data) {
+                    if (parseInt(data) < 0) {
+                        console.log("left fail");
+                    }
+                });
             } else if (kd === 38) {
-                ajax("/up/" + key);
+                console.log("up");
+                ajax("/up/" + key, function (data) {
+                    if (parseInt(data) < 0) {
+                        console.log("up fail");
+                    }
+                });
             } else if (kd === 39) {
-                ajax("/right/" + key);
+                console.log("right");
+                ajax("/right/" + key, function (data) {
+                    if (parseInt(data) < 0) {
+                        console.log("right fail");
+                    }
+                });
             } else if (kd === 40) {
-                ajax("/down/" + key);
+                console.log("down");
+                ajax("/down/" + key, function (data) {
+                    if (parseInt(data) < 0) {
+                        console.log("down fail");
+                    }
+                });
             }
             kd = 0;
             return;
         }
 
         ajax("/look/" + key, function (data) {
+            console.log("look");
             var map = JSON.parse(data);
             if (!(map instanceof Array)) {
+                console.log("look fail");
                 return;
             }
 
