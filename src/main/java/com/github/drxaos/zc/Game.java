@@ -1,8 +1,6 @@
 package com.github.drxaos.zc;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
@@ -10,10 +8,25 @@ import java.util.concurrent.atomic.AtomicLongArray;
 
 public class Game {
 
+    public static class Score {
+        int zid;
+        int oid;
+
+        public Score(int zid, int oid) {
+            this.zid = zid;
+            this.oid = oid;
+        }
+    }
+
+    public interface Manager {
+        void manage(State state);
+    }
+
     public static final int EMPTY = 0; // пустая клетка
     public static final int TREE = 1; // дерево
     public static final int G = 2; // капуста
     public static final int O = 10; // нора
+    public static final int O1 = 11, O2 = 12, O3 = 13, O4 = 14, O5 = 15;
     public static final int OBSERVER = 100; // id наблюдателя
     public static final int Z = 101; // первый id зайца
 
@@ -25,9 +38,6 @@ public class Game {
     public static final int WAIT_PUSH = 50; // дополнительный таймаут на каждый объект
     public static final int WAIT_TREE = 500; // таймаут после попадания в дерево
     public static final int WAIT_LOOK = 100; // таймаут после просмотра карты
-
-    protected Map<String, Integer> keys = new HashMap<>(); // коды авторизации
-    protected Map<Integer, String> names = new HashMap<>(); // имена игроков
 
     protected final int H; // ширина карты
     protected final int W; // высота карты
@@ -41,15 +51,14 @@ public class Game {
     protected AtomicIntegerArray zy = new AtomicIntegerArray(999); // y-координаты зайцев
     protected AtomicLongArray zwait = new AtomicLongArray(999); // таймауты зайцев
 
-    protected AtomicIntegerArray zscore = new AtomicIntegerArray(999); // счет текущий
-    protected AtomicIntegerArray zrecord = new AtomicIntegerArray(999); // счет итоговый
-    protected LinkedHashMap<Long, Integer> zsession = new LinkedHashMap<Long, Integer>(); // активные игровые сессии <время окончания, индекс зайца>
-
     protected AtomicInteger activeRequests = new AtomicInteger(0); // количество исполняющихся запросов
     protected AtomicBoolean observerLock = new AtomicBoolean(false); // глобальная блокировка
 
+    protected LinkedList<Score> scores = new LinkedList<>();
+
     protected String snapshot = ""; // записанное состояние карты
-    protected String rating = ""; // записанный рейтинг
+
+    protected State state = new State(); // управление состоянием
 
     public Game(int w, int h) {
         W = w;
@@ -162,7 +171,7 @@ public class Game {
         return "" + wait;
     }
 
-    private void checkObserver() {
+    protected void checkObserver() {
         while (true) { // пытаемся попасть между снэпшотами
             activeRequests.incrementAndGet();
             if (observerLock.get()) {
@@ -206,10 +215,15 @@ public class Game {
                 cellLock.set(posTo, 0);
                 return ANS_TREE_BUMP;
             case O:
+            case O1:
+            case O2:
+            case O3:
+            case O4:
+            case O5:
                 cellLock.set(posTo, 0);
                 if (pushObj == G) {
                     // гол!
-                    zscore.incrementAndGet(zidtoi(zid));
+                    scores.add(new Score(zid, obj));
                     return chainLength;
                 }
                 // иначе перепрыгиваем
@@ -249,7 +263,7 @@ public class Game {
         return snapshot;
     }
 
-    private boolean checkTimeout(int i) {
+    protected boolean checkTimeout(int i) {
         // проверяем таймаут
         long after = zwait.get(i);
         if (after > System.currentTimeMillis()) {
@@ -262,58 +276,59 @@ public class Game {
         return true;
     }
 
-    public String getRating() {
-        return rating;
-    }
-
     /**
-     * Снэпшоты всего
+     * Обработка состояния
      */
-    public void snap() {
+    public void manage(Manager manager) {
         // блокируем всех
         observerLock.set(true);
         while (activeRequests.get() > 0) ;
 
-        // снэпшотим
+        // управляем состоянием
+        manager.manage(state);
+
+        // снэпшотим карту
         snapshot = map.toString();
-        rating = zscore.toString();
 
         // убираем блокировку
         observerLock.set(false);
     }
 
-    /**
-     * Установка объекта на карту
-     */
-    public void set(int x, int y, int obj) {
-        int xy = xytoi(x, y);
-        map.set(xy, obj);
-        if (obj >= Z) {
-            int i = zidtoi(obj);
-            zx.set(i, x);
-            zy.set(i, y);
+
+    public class State {
+
+        /**
+         * Получение объекта с карты
+         */
+        public int get(int x, int y) {
+            int xy = xytoi(x, y);
+            return map.get(xy);
+        }
+
+        /**
+         * Установка объекта на карту
+         */
+        public void set(int x, int y, int obj) {
+            int xy = xytoi(x, y);
+            map.set(xy, obj);
+            if (obj >= Z) {
+                int i = zidtoi(obj);
+                int prevX = zx.get(i);
+                int prevY = zy.get(i);
+                if (prevX >= 0 && prevY >= 0) {
+                    map.set(xytoi(prevX, prevY), EMPTY);
+                }
+                zx.set(i, x);
+                zy.set(i, y);
+            }
+        }
+
+        public boolean hasScores() {
+            return scores.size() > 0;
+        }
+
+        public Score nextScore() {
+            return scores.poll();
         }
     }
-
-    /**
-     * Добавление ключа
-     */
-    public void putKey(String key, Integer id) {
-        keys.put(key, id);
-    }
-
-    /**
-     * Добавление имени
-     */
-    public void putName(Integer id, String name) {
-        names.put(id, name);
-    }
-
-    /**
-     * Авторизация
-     */
-    public int auth(String key) {
-        return keys.getOrDefault(key, -1);
-    }
-
 }

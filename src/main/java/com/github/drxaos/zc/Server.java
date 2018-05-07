@@ -11,12 +11,14 @@ public class Server implements Runnable {
     private long uid = 1;
     volatile boolean stop;
     Game game;
+    Db db;
 
     String address = "0.0.0.0";
     int port = 9999;
 
-    public Server(Game game) {
+    public Server(Game game, Db db) {
         this.game = game;
+        this.db = db;
     }
 
     public Server address(String address) {
@@ -39,6 +41,7 @@ public class Server implements Runnable {
         return this;
     }
 
+
     public void run() {
         Setup setup = Setup.create("srv" + uid++).address(address).port(port);
         setup.config().sub("c3p0").set("initialPoolSize", 100);
@@ -53,42 +56,42 @@ public class Server implements Runnable {
         setup.get("/size/{key}").plain((String key) -> {
             // [W, H]
             try {
-                int id = game.auth(key);
+                int id = auth(key);
                 if (id < 0) {
-                    return "-2";
+                    return "unauthorized";
                 }
                 return "[" + game.getW() + ", " + game.getH() + "]";
             } catch (Exception e) {
                 e.printStackTrace();
-                return "-1";
+                return "" + Game.ANS_ERROR;
             }
         });
 
         setup.get("/score/{key}").plain((String key) -> {
-            // [ScoreWhite, ScoreGray]
+            // [Current score, Max score]
             try {
-                int id = game.auth(key);
-                if (id < 0) {
-                    return "-2";
+                int zid = auth(key);
+                if (zid < 0) {
+                    return "unauthorized";
                 }
-                return "[0,0]";//"[" + game.getScoreCurrent() + ", " + game.getScore() + "]";
+                return "[" + db.getCurrentScore(zid) + ", " + db.getMaxScore(zid) + "]";
             } catch (Exception e) {
                 e.printStackTrace();
-                return "-1";
+                return "" + Game.ANS_ERROR;
             }
         });
 
         setup.get("/rating/{key}").plain((String key) -> {
-            // [Score100, Score101, Score102, ... , Score299]
+            // [ZID 1, Name 1, Max score 1, ZID 2, Name 2, Max score 2, ...]
             try {
-                int id = game.auth(key);
+                int id = auth(key);
                 if (id < 0) {
-                    return "-2";
+                    return "unauthorized";
                 }
-                return game.getRating();
+                return db.getRating();
             } catch (Exception e) {
                 e.printStackTrace();
-                return "-1";
+                return "" + Game.ANS_ERROR;
             }
         });
 
@@ -99,12 +102,12 @@ public class Server implements Runnable {
                 String key = req.param("key");
                 long prev = ipwait.getOrDefault(req.clientIpAddress(), 0L);
                 if (System.currentTimeMillis() - prev < 1000) {
-                    return "-1";
+                    return "" + Game.ANS_WAIT;
                 }
                 ipwait.put(req.clientIpAddress(), System.currentTimeMillis());
-                int id = game.auth(key);
+                int id = auth(key);
                 if (id < 0) {
-                    return "-2";
+                    return "unauthorized";
                 }
                 return "" + id;
             } catch (Exception e) {
@@ -117,9 +120,9 @@ public class Server implements Runnable {
             // [map] OR -3
 //            long start = System.nanoTime();
             try {
-                int id = game.auth(key);
+                int id = auth(key);
                 if (id < 0) {
-                    return "" + Game.ANS_ERROR;
+                    return "unauthorized";
                 }
                 return game.look(id);
             } catch (Exception e) {
@@ -133,9 +136,9 @@ public class Server implements Runnable {
         setup.get("/up/{key}").plain((String key) -> {
             // MS OR -1
             try {
-                int id = game.auth(key);
+                int id = auth(key);
                 if (id < 0) {
-                    return "-2";
+                    return "unauthorized";
                 }
 //            long start = System.nanoTime();
                 String res = game.move(id, 0, -1);
@@ -143,16 +146,16 @@ public class Server implements Runnable {
                 return res;
             } catch (Exception e) {
                 e.printStackTrace();
-                return "-1";
+                return "" + Game.ANS_ERROR;
             }
         });
 
         setup.get("/down/{key}").plain((String key) -> {
             // MS OR -1
             try {
-                int id = game.auth(key);
+                int id = auth(key);
                 if (id < 0) {
-                    return "-2";
+                    return "unauthorized";
                 }
 //            long start = System.nanoTime();
                 String res = game.move(id, 0, 1);
@@ -160,16 +163,16 @@ public class Server implements Runnable {
                 return res;
             } catch (Exception e) {
                 e.printStackTrace();
-                return "-1";
+                return "" + Game.ANS_ERROR;
             }
         });
 
         setup.get("/left/{key}").plain((String key) -> {
             // MS OR -1
             try {
-                int id = game.auth(key);
+                int id = auth(key);
                 if (id < 0) {
-                    return "-2";
+                    return "unauthorized";
                 }
 //            long start = System.nanoTime();
                 String res = game.move(id, -1, 0);
@@ -177,16 +180,16 @@ public class Server implements Runnable {
                 return res;
             } catch (Exception e) {
                 e.printStackTrace();
-                return "-1";
+                return "" + Game.ANS_ERROR;
             }
         });
 
         setup.get("/right/{key}").plain((String key) -> {
             // MS OR -1
             try {
-                int id = game.auth(key);
+                int id = auth(key);
                 if (id < 0) {
-                    return "-2";
+                    return "unauthorized";
                 }
 //            long start = System.nanoTime();
                 String res = game.move(id, 1, 0);
@@ -194,14 +197,16 @@ public class Server implements Runnable {
                 return res;
             } catch (Exception e) {
                 e.printStackTrace();
-                return "-1";
+                return "" + Game.ANS_ERROR;
             }
         });
 
         setup.activate();
 
         while (!stop) {
-            game.snap();
+            game.manage(state -> {
+
+            });
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
@@ -210,6 +215,10 @@ public class Server implements Runnable {
         }
 
         setup.shutdown();
+    }
+
+    protected int auth(String key) {
+        return db.getZid(key);
     }
 
 }
