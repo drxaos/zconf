@@ -139,7 +139,7 @@ public class Server implements Runnable {
             try {
                 boolean registered = db.register(key, name, email, phone, comment);
                 if (registered) {
-                    req.response().redirect("/mobi.html");
+                    req.response().redirect("/dash.html");
                 } else {
                     req.response().redirect("/error.html");
                 }

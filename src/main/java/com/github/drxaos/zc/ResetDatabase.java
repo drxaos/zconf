@@ -19,8 +19,10 @@ public class ResetDatabase {
             codes.add(sb.toString());
         }
         int zid = Game.Z;
+        db.clearKeys();
         for (String code : codes) {
-            db.resetPlayer(zid++, code);
+            db.resetPlayer(zid++);
+            db.addKey(zid, code);
             out.write(code.getBytes());
             out.write("\n".getBytes());
         }

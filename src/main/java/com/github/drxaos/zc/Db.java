@@ -68,13 +68,12 @@ public class Db {
         auth.put(key, zid);
     }
 
-    public void resetPlayer(int zid, String key) {
+    public void resetPlayer(int zid) {
         names.remove(zid);
         infos.remove(zid);
         records.add(0, zid);
         scores.remove(zid);
         sessions.remove(zid);
-        addKey(zid, key);
     }
 
     public boolean register(String key, String name, String email, String phone, String comment) {
@@ -145,5 +144,9 @@ public class Db {
 
     public long getSessionEnd(int zid) {
         return Optional.ofNullable(sessions.getScore(zid)).orElse(0d).longValue();
+    }
+
+    public void clearKeys() {
+        auth.clear();
     }
 }
