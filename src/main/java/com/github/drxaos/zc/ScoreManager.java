@@ -1,11 +1,11 @@
 package com.github.drxaos.zc;
 
-public class CycleManager implements Manager {
+public class ScoreManager implements Manager {
     Db db;
     Game game;
     Level level;
 
-    public CycleManager(Db db, Game game, Level level) {
+    public ScoreManager(Db db, Game game, Level level) {
         this.db = db;
         this.game = game;
         this.level = level;
@@ -25,10 +25,5 @@ public class CycleManager implements Manager {
 
         // Обновляем капусту
         level.addG(state, g);
-
-        // Завершаем сессии
-
-        // Пересчитываем рейтинг
-
     }
 }

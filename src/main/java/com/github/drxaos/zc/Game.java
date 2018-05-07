@@ -99,7 +99,7 @@ public class Game {
      * ZID в индекс
      */
     protected int zidtoi(int id) {
-        return id - Z;
+        return id - Z + 1; // 0 - observer
     }
 
 
@@ -328,6 +328,19 @@ public class Game {
 
         public Score nextScore() {
             return scores.poll();
+        }
+
+        public void removeZ(Integer zid) {
+            if (zid >= Z) {
+                int i = zidtoi(zid);
+                int prevX = zx.get(i);
+                int prevY = zy.get(i);
+                if (prevX >= 0 && prevY >= 0) {
+                    map.set(xytoi(prevX, prevY), EMPTY);
+                }
+                zx.set(i, -1);
+                zy.set(i, -1);
+            }
         }
     }
 }

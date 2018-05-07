@@ -2,11 +2,16 @@ package com.github.drxaos.zc;
 
 public class Start {
     public static void main(String[] args) {
+        int w = 50, h = 25;
+        int trees = 50, g = 50;
+        int sessionLength = 3 * 60 * 1000;
+
         Db db = new Db();
-        Game game = new Game(50, 25);
-        RandomLevel level = new RandomLevel(50, 50);
+        Game game = new Game(w, h);
+        RandomLevel level = new RandomLevel(trees, g);
         InitManager init = new InitManager(db, game, level);
-        CycleManager manager = new CycleManager(db, game, level);
-        new Server(game, db, init, manager).start();
+        ScoreManager scoreManager = new ScoreManager(db, game, level);
+        SessionManager sessionManager = new SessionManager(db, game, level, sessionLength);
+        new Server(game, db, init, new Manager[]{scoreManager, sessionManager}, sessionManager).start();
     }
 }

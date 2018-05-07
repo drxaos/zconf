@@ -72,4 +72,16 @@ public class RandomLevel implements Level {
             state.set(p.x, p.y, Game.G);
         }
     }
+
+    public void addZ(Game.State state, int zid) {
+        Game game = state.getGame();
+
+        while (true) {
+            Point point = new Point((int) (r.nextDouble() * game.getW()), (int) (r.nextDouble() * game.getH()));
+            if (state.get(point.x, point.y) == Game.EMPTY) {
+                state.set(point.x, point.y, zid);
+                break;
+            }
+        }
+    }
 }

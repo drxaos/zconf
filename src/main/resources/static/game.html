@@ -23,6 +23,23 @@
 </style>
 
 <script>
+    if (!String.prototype.padStart) {
+        String.prototype.padStart = function padStart(targetLength, padString) {
+            targetLength = targetLength >> 0; //truncate if number or convert non-number to 0;
+            padString = String((typeof padString !== 'undefined' ? padString : ' '));
+            if (this.length > targetLength) {
+                return String(this);
+            }
+            else {
+                targetLength = targetLength - this.length;
+                if (targetLength > padString.length) {
+                    padString += padString.repeat(targetLength / padString.length); //append to original to ensure we are longer than needed
+                }
+                return padString.slice(0, targetLength) + String(this);
+            }
+        };
+    }
+
     var ajax = function (url, callback) {
         var xmlHTTP = new XMLHttpRequest();
         xmlHTTP.onreadystatechange = function () {
@@ -36,6 +53,7 @@
     var key = "";
     var w = 0, h = 0, s1 = 0, s2 = 0, id = 0, kd = 0;
     var rating = [];
+    var session = 0;
 
     if (document.addEventListener) {
         document.addEventListener("keydown", keyCapt, false);
@@ -60,6 +78,14 @@
         e.preventDefault();
         e.stopPropagation();
         return false;
+    }
+
+    function startGame() {
+        ajax("/start/" + key, function (data) {
+            if (parseInt(data) < 0) {
+                console.log("start fail");
+            }
+        });
     }
 
     var p = document.getElementById("map");
@@ -109,14 +135,10 @@
             s2 = d[1];
         });
         ajax("/rating/" + key, function (data) {
-            var d = JSON.parse(data);
-            rating = d.map(function (scor, idx) {
-                return {z: idx + 100, s: scor};
-            }).filter(function (e) {
-                return e.s > 0;
-            }).sort(function (a, b) {
-                return a.s === b.s ? a.z - b.z : b.s - a.s;
-            });
+            rating = JSON.parse(data);
+        });
+        ajax("/session/" + key, function (data) {
+            session = JSON.parse(data);
         });
 
         if (kd > 0) {
@@ -205,15 +227,44 @@
                 }
                 s += "║";
 
-                if (y === 1 && s1 >= s2 || y === 2 && s2 > s1) {
-                    s += "  <span style='color: white'>БЕЛЫЕ</span>  <span style='color: lime'>" + s1 + "</span>"
+                if (id !== 100 && y === 1) {
+                    s += "  <span style='color: white'>Текущий счет</span>  <span style='color: lime'>" + s1 + "</span>"
                 }
-                if (y === 1 && s1 < s2 || y === 2 && s2 <= s1) {
-                    s += "  <span style='color: darkgray'>СЕРЫЕ</span>  <span style='color: lime'>" + s2 + "</span>"
+                if (id !== 100 && y === 2) {
+                    s += "  <span style='color: white'>Максимальный счет</span>  <span style='color: lime'>" + s2 + "</span>"
                 }
-                if (y >= 4 && rating.length > y - 4) {
-                    s += "  <span style='color: " + (rating[y - 4].z < 200 ? "white" : "darkgray") + "'>Z" + rating[y - 4].z + "</span>  <span style='color: lime'>" + rating[y - 4].s + "</span>";
+
+                if (id !== 100 && y === 4) {
+                    s += "  <span style='color: darkgray'>ZID</span>  <span style='color: lime'>" + id + "</span>"
                 }
+                if (id !== 100 && y === 5) {
+                    if (session > 0) {
+                        var sessStr = "" + Math.round(session / 1000) + " сек";
+                        if (session > 100000) {
+                            sessStr = "" + Math.round(session / 60 / 1000) + " мин";
+                        }
+                        s += "  <span style='color: darkgray'>Раунд</span>  <span style='color: lime'>" + sessStr + "</span> <span style='color: black; background-color: red; cursor: pointer' onclick='startGame()'> ↺ </span>"
+                    } else {
+                        s += "  <span style='color: darkgray'>Раунд</span>  <span style='color: black; background-color: gold; cursor: pointer' onclick='startGame()'> Начать игру! </span>"
+                    }
+                }
+
+                var lnum = 1;
+                if (id === 100 && (y >= lnum && rating.length > y - lnum)) {
+                    var n1 = rating[y - lnum].n.substring(0, 12);
+                    var n2 = rating[y - lnum].n.substring(12, 13);
+                    var n3 = rating[y - lnum].n.substring(13, 14);
+                    s += "  <span style='color: " + (rating[y - lnum].z < 200 ? "white" : "darkgray") + "'>Z" + rating[y - lnum].z + "</span>  <span style='color: lime'>" + ("" + rating[y - lnum].s).padStart(4) + "</span> <span style='color: skyblue'>" + n1 + "</span><span style='color: #4a7181'>" + n2 + "</span><span style='color: #1e2e34'>" + n3 + "</span>";
+                }
+
+                lnum = 7;
+                if (id !== 100 && (y >= lnum && rating.length > y - lnum)) {
+                    var n1 = rating[y - lnum].n.substring(0, 12);
+                    var n2 = rating[y - lnum].n.substring(12, 13);
+                    var n3 = rating[y - lnum].n.substring(13, 14);
+                    s += "  <span style='color: " + (rating[y - lnum].z < 200 ? "white" : "darkgray") + "'>Z" + rating[y - lnum].z + "</span>  <span style='color: lime'>" + ("" + rating[y - lnum].s).padStart(4) + "</span> <span style='color: skyblue'>" + n1 + "</span><span style='color: #4a7181'>" + n2 + "</span><span style='color: #1e2e34'>" + n3 + "</span>";
+                }
+
                 var text = s.replace(/(<([^>]+)>)/ig, "");
                 var spaces = text.indexOf("\n") - (text.length - text.lastIndexOf("\n"));
                 for (var i = 0; i < spaces; i++) {

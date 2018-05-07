@@ -7,23 +7,24 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Server implements Runnable {
-
     private long uid = 1;
     volatile boolean stop;
 
     Manager init;
-    Manager cycle;
+    Manager[] cycle;
+    SessionControl sessionControl;
     Game game;
     Db db;
 
     String address = "0.0.0.0";
     int port = 9999;
 
-    public Server(Game game, Db db, Manager init, Manager cycle) {
+    public Server(Game game, Db db, Manager init, Manager[] cycle, SessionControl sessionControl) {
         this.game = game;
         this.db = db;
         this.init = init;
         this.cycle = cycle;
+        this.sessionControl = sessionControl;
     }
 
     public Server address(String address) {
@@ -53,7 +54,9 @@ public class Server implements Runnable {
         Setup setup = startServer();
 
         while (!stop) {
-            game.manage(cycle);
+            for (Manager m : cycle) {
+                game.manage(m);
+            }
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
@@ -65,7 +68,8 @@ public class Server implements Runnable {
     }
 
     protected int auth(String key) {
-        return db.getZid(key);
+        Integer zid = db.getZid(key);
+        return zid == null ? -4 : zid;
     }
 
     private void stopServer(Setup setup) {
@@ -112,7 +116,7 @@ public class Server implements Runnable {
         });
 
         setup.get("/rating/{key}").plain((String key) -> {
-            // [ZID 1, Name 1, Max score 1, ZID 2, Name 2, Max score 2, ...]
+            // [ZID 1, "Name 1", Max score 1, ZID 2, "Name 2", Max score 2, ...]
             try {
                 int id = auth(key);
                 if (id < 0) {
@@ -160,6 +164,40 @@ public class Server implements Runnable {
                 return "" + Game.ANS_ERROR;
             } finally {
 //                System.out.println(System.nanoTime() - start);
+            }
+        });
+
+        setup.get("/start/{key}").plain((String key) -> {
+            // MS till end
+            try {
+                int id = auth(key);
+                if (id < 0) {
+                    return "unauthorized";
+                }
+//            long start = System.nanoTime();
+                long res = sessionControl.start(id);
+//            System.out.println(System.nanoTime() - start);
+                return "" + res;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return "" + Game.ANS_ERROR;
+            }
+        });
+
+        setup.get("/session/{key}").plain((String key) -> {
+            // MS till end
+            try {
+                int id = auth(key);
+                if (id < 0) {
+                    return "unauthorized";
+                }
+//            long start = System.nanoTime();
+                long res = sessionControl.timeLeft(id);
+//            System.out.println(System.nanoTime() - start);
+                return "" + res;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return "" + Game.ANS_ERROR;
             }
         });
 
