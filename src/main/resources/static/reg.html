@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Регистрация</title>
+
+    <link rel="stylesheet" href="mobile.css">
+
+</head>
+
+<body>
+
+<div class="main-content">
+
+    <div class="form-mini-container">
+
+
+        <h1>Регистрация</h1>
+
+        <form class="form-mini" method="post" action="/register" onsubmit="saveKey()">
+
+            <div class="form-row">
+                <input type="password" name="key" id="key" placeholder="Код (обязательное)">
+            </div>
+
+            <div class="form-row">
+                <input type="text" name="name" placeholder="Имя Фамилия (обязательное)">
+            </div>
+
+            <div class="form-row">
+                <input type="email" name="email" placeholder="Почта">
+            </div>
+
+            <div class="form-row">
+                <input type="text" name="phone" placeholder="Телефон">
+            </div>
+
+            <div class="form-row">
+                <input type="text" name="comment" placeholder="Интересы">
+            </div>
+
+            <div class="form-row form-last-row">
+                <button type="submit">Отправить</button>
+            </div>
+
+        </form>
+    </div>
+
+
+</div>
+
+<script>
+    var k = document.getElementById("key");
+    k.value = localStorage.getItem('code');
+
+    function saveKey() {
+        localStorage.setItem('code', k.value);
+    }
+</script>
+
+</body>
+
+</html>

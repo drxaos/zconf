@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Optional;
 
 public class Db {
+    public static final int ANS_WRONG_KEY = -4; // ключ не найден
+    public static final int ANS_NOT_REGISTERED = -5; // не пройдена регистрация
+
     protected RedissonClient r;
     protected RMap<String, Integer> auth;
     protected RMap<Integer, String> names;
@@ -42,12 +45,49 @@ public class Db {
         sessions = r.getScoredSortedSet("sessions");
     }
 
+    public void shutdown() {
+        r.shutdown();
+    }
+
     public Collection<Integer> getActiveSessions() {
         return sessions.readAll();
     }
 
     public Integer getZid(String key) {
-        return auth.get(key);
+        Integer zid = auth.get(key);
+        if (zid == null) {
+            return ANS_WRONG_KEY;
+        }
+        if (names.get(zid) == null) {
+            return ANS_NOT_REGISTERED;
+        }
+        return zid;
+    }
+
+    public void addKey(int zid, String key) {
+        auth.put(key, zid);
+    }
+
+    public void resetPlayer(int zid, String key) {
+        names.remove(zid);
+        infos.remove(zid);
+        records.add(0, zid);
+        scores.remove(zid);
+        sessions.remove(zid);
+        addKey(zid, key);
+    }
+
+    public boolean register(String key, String name, String email, String phone, String comment) {
+        Integer zid = auth.get(key);
+        if (zid == null || zid < Game.Z || names.get(zid) != null) {
+            return false;
+        }
+        if (name == null || name.trim().length() <= 3) {
+            return false;
+        }
+        names.put(zid, name);
+        infos.put(zid, "" + name + " / " + email + " / " + phone + " / " + comment);
+        return true;
     }
 
     public Integer getCurrentScore(int zid) {
@@ -88,6 +128,9 @@ public class Db {
         Collection<ScoredEntry<Integer>> scoredEntries = records.entryRangeReversed(0, 100);
         for (ScoredEntry<Integer> entry : scoredEntries) {
             long score = entry.getScore().longValue();
+            if (score == 0L) {
+                continue;
+            }
             Integer zid = entry.getValue();
             String name = names.get(zid).replace("\"", "");
             result.add("{\"z\":" + zid + ",\"s\":" + score + ",\"n\":\"" + name + "\"}");

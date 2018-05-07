@@ -104,6 +104,10 @@
             s += "║                      ║\n";
             s += "╙──────────────────────╜\n";
             p.innerHTML = s;
+
+            k = document.getElementById("key");
+            k.value = localStorage.getItem('code');
+
             return;
         }
 
@@ -115,6 +119,11 @@
                     if (d > 0) {
                         key = kv;
                         id = d;
+                        localStorage.setItem('code', k.value);
+                    }
+                    if (d === -5) {
+                        // не пройдена регистрация
+                        window.location.href = "/reg.html";
                     }
                 });
             }
@@ -216,11 +225,7 @@
                             s += "<span style='color: darkgray;'>O</span>";
                             break;
                         default:
-                            if (o >= 100 && o < 200) {
-                                s += "<span style='color: white;' " + (o === id ? 'class="active"' : '') + ">Z</span>";
-                            } else if (o >= 200 && o < 300) {
-                                s += "<span style='color: darkgray;' " + (o === id ? 'class="active"' : '') + ">Z</span>";
-                            }
+                            s += "<span style='color: white;' " + (o === id ? 'class="active"' : '') + ">Z</span>";
                             break;
                     }
 
@@ -243,9 +248,9 @@
                         if (session > 100000) {
                             sessStr = "" + Math.round(session / 60 / 1000) + " мин";
                         }
-                        s += "  <span style='color: darkgray'>Раунд</span>  <span style='color: lime'>" + sessStr + "</span> <span style='color: black; background-color: red; cursor: pointer' onclick='startGame()'> ↺ </span>"
+                        s += "  <span style='color: darkgray'>Раунд</span>  <span style='color: lime'>" + sessStr + "</span> <a href='#' onclick='startGame()' style='text-decoration: none; cursor: pointer'><span style='color: black; background-color: red'> ↺ </span></a>";
                     } else {
-                        s += "  <span style='color: darkgray'>Раунд</span>  <span style='color: black; background-color: gold; cursor: pointer' onclick='startGame()'> Начать игру! </span>"
+                        s += "  <span style='color: darkgray'>Раунд закончен</span>";
                     }
                 }
 
@@ -263,6 +268,16 @@
                     var n2 = rating[y - lnum].n.substring(12, 13);
                     var n3 = rating[y - lnum].n.substring(13, 14);
                     s += "  <span style='color: " + (rating[y - lnum].z < 200 ? "white" : "darkgray") + "'>Z" + rating[y - lnum].z + "</span>  <span style='color: lime'>" + ("" + rating[y - lnum].s).padStart(4) + "</span> <span style='color: skyblue'>" + n1 + "</span><span style='color: #4a7181'>" + n2 + "</span><span style='color: #1e2e34'>" + n3 + "</span>";
+                }
+
+                if (id !== 100 && session === 0 && y == h - 4) {
+                    s += "  <a href='#' onclick='startGame()' style='text-decoration: none; cursor: pointer'><span style='color: black; background-color: gold' onclick='startGame()'>                         </span></a>"
+                }
+                if (id !== 100 && session === 0 && y == h - 3) {
+                    s += "  <a href='#' onclick='startGame()' style='text-decoration: none; cursor: pointer'><span style='color: black; background-color: gold' onclick='startGame()'>       Начать игру!      </span></a>"
+                }
+                if (id !== 100 && session === 0 && y == h - 2) {
+                    s += "  <a href='#' onclick='startGame()' style='text-decoration: none; cursor: pointer'><span style='color: black; background-color: gold' onclick='startGame()'>                         </span></a>"
                 }
 
                 var text = s.replace(/(<([^>]+)>)/ig, "");
