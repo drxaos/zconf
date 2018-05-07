@@ -18,10 +18,6 @@ public class Game {
         }
     }
 
-    public interface Manager {
-        void manage(State state);
-    }
-
     public static final int EMPTY = 0; // пустая клетка
     public static final int TREE = 1; // дерево
     public static final int G = 2; // капуста
@@ -294,8 +290,11 @@ public class Game {
         observerLock.set(false);
     }
 
-
     public class State {
+
+        public Game getGame() {
+            return Game.this;
+        }
 
         /**
          * Получение объекта с карты

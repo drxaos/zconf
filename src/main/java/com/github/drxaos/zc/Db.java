@@ -58,4 +58,8 @@ public class Db {
     public String getRating() {
         return rating;
     }
+
+    public void incScore(int zid) {
+        scores.addScoreAsync(zid, 1);
+    }
 }

@@ -10,15 +10,20 @@ public class Server implements Runnable {
 
     private long uid = 1;
     volatile boolean stop;
+
+    Manager init;
+    Manager cycle;
     Game game;
     Db db;
 
     String address = "0.0.0.0";
     int port = 9999;
 
-    public Server(Game game, Db db) {
+    public Server(Game game, Db db, Manager init, Manager cycle) {
         this.game = game;
         this.db = db;
+        this.init = init;
+        this.cycle = cycle;
     }
 
     public Server address(String address) {
@@ -43,6 +48,31 @@ public class Server implements Runnable {
 
 
     public void run() {
+        game.manage(init);
+
+        Setup setup = startServer();
+
+        while (!stop) {
+            game.manage(cycle);
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                // ignore
+            }
+        }
+
+        stopServer(setup);
+    }
+
+    protected int auth(String key) {
+        return db.getZid(key);
+    }
+
+    private void stopServer(Setup setup) {
+        setup.shutdown();
+    }
+
+    private Setup startServer() {
         Setup setup = Setup.create("srv" + uid++).address(address).port(port);
         setup.config().sub("c3p0").set("initialPoolSize", 100);
         setup.config().sub("c3p0").set("minPoolSize", 100);
@@ -202,23 +232,7 @@ public class Server implements Runnable {
         });
 
         setup.activate();
-
-        while (!stop) {
-            game.manage(state -> {
-
-            });
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                // ignore
-            }
-        }
-
-        setup.shutdown();
-    }
-
-    protected int auth(String key) {
-        return db.getZid(key);
+        return setup;
     }
 
 }
