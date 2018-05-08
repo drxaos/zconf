@@ -21,11 +21,16 @@ public class ResetDatabase {
         int zid = Game.Z;
         db.clearKeys();
         for (String code : codes) {
-            db.resetPlayer(zid++);
+            db.resetPlayer(zid);
             db.addKey(zid, code);
             out.write(code.getBytes());
             out.write("\n".getBytes());
+            zid++;
         }
+
+        db.addKey(Game.OBSERVER, "password");
+        db.setName(Game.OBSERVER, "observer");
+
         out.close();
         db.shutdown();
     }

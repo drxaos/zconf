@@ -15,6 +15,7 @@ import java.util.Optional;
 public class Db {
     public static final int ANS_WRONG_KEY = -4; // ключ не найден
     public static final int ANS_NOT_REGISTERED = -5; // не пройдена регистрация
+    public static final int ANS_NO_SESSION = -6; // игровая сессия не начата
 
     protected RedissonClient r;
     protected RMap<String, Integer> auth;
@@ -76,17 +77,24 @@ public class Db {
         sessions.remove(zid);
     }
 
-    public boolean register(String key, String name, String email, String phone, String comment) {
+    public String register(String key, String name, String email, String phone, String comment) {
         Integer zid = auth.get(key);
-        if (zid == null || zid < Game.Z || names.get(zid) != null) {
-            return false;
+        if (name == null || name.trim().length() <= 3 || !name.matches(".*[а-яА-ЯёЁ].*")) {
+            return "wrong name";
         }
-        if (name == null || name.trim().length() <= 3) {
-            return false;
+        if (zid == null || zid < Game.Z) {
+            return "wrong zid";
+        }
+        if (names.get(zid) != null) {
+            return "already registered";
         }
         names.put(zid, name);
         infos.put(zid, "" + name + " / " + email + " / " + phone + " / " + comment);
-        return true;
+        return "ok";
+    }
+
+    public void setName(int zid, String name) {
+        names.put(zid, name);
     }
 
     public Integer getCurrentScore(int zid) {
@@ -131,7 +139,7 @@ public class Db {
                 continue;
             }
             Integer zid = entry.getValue();
-            String name = names.get(zid).replace("\"", "");
+            String name = Optional.ofNullable(names.get(zid)).orElse("").replace("\"", "");
             result.add("{\"z\":" + zid + ",\"s\":" + score + ",\"n\":\"" + name + "\"}");
         }
         rating = result.toString();

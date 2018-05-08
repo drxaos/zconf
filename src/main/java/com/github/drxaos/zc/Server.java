@@ -137,13 +137,17 @@ public class Server implements Runnable {
 
             // 1 = success, -1 = fail
             try {
-                boolean registered = db.register(key, name, email, phone, comment);
-                if (registered) {
-                    req.response().redirect("/dash.html");
-                } else {
+                String result = db.register(key, name, email, phone, comment);
+                if (result.equals("ok")) {
+                    req.response().redirect("/ok.html");
+                } else if (result.equals("wrong name")) {
+                    req.response().redirect("/name.html");
+                } else if (result.equals("wrong zid")) {
                     req.response().redirect("/error.html");
+                } else if (result.equals("already registered")) {
+                    req.response().redirect("/already.html");
                 }
-                return registered ? 1 : -1;
+                return result;
             } catch (Exception e) {
                 e.printStackTrace();
                 return "" + Game.ANS_ERROR;
@@ -233,6 +237,9 @@ public class Server implements Runnable {
                 if (zid < 0) {
                     return "" + zid;
                 }
+                if (db.getSessionEnd(zid) == 0L) {
+                    return "" + Db.ANS_NO_SESSION;
+                }
 //            long start = System.nanoTime();
                 String res = game.move(zid, 0, -1);
 //            System.out.println(System.nanoTime() - start);
@@ -249,6 +256,9 @@ public class Server implements Runnable {
                 int zid = auth(key);
                 if (zid < 0) {
                     return "" + zid;
+                }
+                if (db.getSessionEnd(zid) == 0L) {
+                    return "" + Db.ANS_NO_SESSION;
                 }
 //            long start = System.nanoTime();
                 String res = game.move(zid, 0, 1);
@@ -267,6 +277,9 @@ public class Server implements Runnable {
                 if (zid < 0) {
                     return "" + zid;
                 }
+                if (db.getSessionEnd(zid) == 0L) {
+                    return "" + Db.ANS_NO_SESSION;
+                }
 //            long start = System.nanoTime();
                 String res = game.move(zid, -1, 0);
 //            System.out.println(System.nanoTime() - start);
@@ -283,6 +296,9 @@ public class Server implements Runnable {
                 int zid = auth(key);
                 if (zid < 0) {
                     return "" + zid;
+                }
+                if (db.getSessionEnd(zid) == 0L) {
+                    return "" + Db.ANS_NO_SESSION;
                 }
 //            long start = System.nanoTime();
                 String res = game.move(zid, 1, 0);

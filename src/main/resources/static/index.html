@@ -7,18 +7,6 @@
 </style>
 
 <h2 style="color: white">Зайцы и капуста</h2>
-<h3>Пример игры</h3>
-
-<img src="/scr.png"/>
-<ul style="list-style-type: none;">
-    <li><pre style="display: inline; color: red">#</pre> - препятствие</li>
-    <li><pre style="display: inline; color: lime">$</pre> - капуста</li>
-    <li><pre style="display: inline; color: green">.</pre> - свободное место</li>
-    <li><pre style="display: inline; color: white">Z</pre> - белый заяц</li>
-    <li><pre style="display: inline; color: darkgray">Z</pre> - серый заяц</li>
-    <li><pre style="display: inline; color: white">O</pre> - нора белых зайцев</li>
-    <li><pre style="display: inline; color: darkgray">O</pre> - нора серых зайцев</li>
-</ul>
 
 <h3>Правила</h3>
 <p>
@@ -38,6 +26,28 @@
     А если заяц врежется в дерево, то перезарядка будет 500мс.
 </p>
 
+<p>
+    <a href="/reg.html" style="color: skyblue">Регистрация</a>
+</p>
+<p>
+    <a href="/dash.html" style="color: skyblue">Мобильная версия</a>
+</p>
+<p>
+    <a href="/game.html" style="color: skyblue">Полноэкранный режим</a>
+</p>
+
+
+<h3>Пример игры</h3>
+
+<img src="/scr.png"/>
+<ul style="list-style-type: none;">
+    <li><pre style="display: inline; color: red">#</pre> - препятствие</li>
+    <li><pre style="display: inline; color: lime">$</pre> - капуста</li>
+    <li><pre style="display: inline; color: green">.</pre> - свободное место</li>
+    <li><pre style="display: inline; color: white">Z</pre> - заяц</li>
+    <li><pre style="display: inline; color: white">O</pre> - нора</li>
+</ul>
+
 <h3>API</h3>
 <p>
     Каждый запрос возвращает валидный JSON:
@@ -45,9 +55,6 @@
 </p>
 <p>
     Если заяц еще перезаряжается, то на любой запрос будет возвращено значение "-1".
-</p>
-<p>
-    Если в запросе передан неверный ключ, то на любой запрос будет возвращено значение "-2".
 </p>
 <ul style="list-style-type: none;">
     <li>
@@ -60,15 +67,12 @@
         <code style="color: cornflowerblue">/look/&lt;ключ&gt;</code> - возвращает массив всех клеток поля (например "[0, 0, 1, 1, 0, 2, 155, ...]")
         <ul style="list-style-type: none;">
             <li>Клетки каждой строки идут друг за другом, строки ничем не разделяются</li>
-            <li>После вызова перезарядка занимает 100мс</li>
-            <li>Если заяц еще перезаряжается, то будет возвращено значение "-1"</li>
+            <li>Запрашивать карту можно не чаще раза в 100мс</li>
             <li><code>0</code> - пустая клетка</li>
             <li><code>1</code> - препятствие</li>
             <li><code>2</code> - капуста</li>
-            <li><code>10</code> - нора белых зайцев</li>
-            <li><code>20</code> - нора серых зайцев</li>
-            <li><code>100-199</code> - белый заяц</li>
-            <li><code>200-299</code> - серый заяц</li>
+            <li><code>10</code> - нора зайцев</li>
+            <li><code>100-999</code> - заяц</li>
         </ul>
     </li>
     <li>
@@ -83,14 +87,25 @@
     <li>
         <code style="color: cornflowerblue">/left/&lt;ключ&gt;</code> - переместить зайца на клетку влево, возвращает время перезарядки или "-1".
     </li>
+</ul>
+<p>
+    Коды ошибок:
+</p>
+<ul style="list-style-type: none;">
     <li>
-        <code style="color: cornflowerblue">/score/&lt;ключ&gt;</code> - возвращает массив очков белой и серой команды (например "[2, 6]" - 2 очка у белой команды и 6 у серой)
+        <code style="color: hotpink">-1</code> - заяц перезаряжается.
     </li>
     <li>
-        <code style="color: cornflowerblue">/rating/&lt;ключ&gt;</code> - возвращает массив очков всех зайцев от 100 до 299 (например "[15, 8, ... , 0]" - 15 очков у белого зайца 100, 8 у белого зайца 101, ... , 0 очков у серого зайца 299)
+        <code style="color: hotpink">-3</code> - неизвестная ошибка.
+    </li>
+    <li>
+        <code style="color: hotpink">-4</code> - ключ не найден.
+    </li>
+    <li>
+        <code style="color: hotpink">-5</code> - не пройдена регистрация.
+    </li>
+    <li>
+        <code style="color: hotpink">-6</code> - игровая сессия не начата.
     </li>
 </ul>
 
-<p>
-    <a href="/game.html">Просмотр игры</a> Использует API <code style="color: cornflowerblue">/look/&lt;ключ&gt;</code> раз в 200мс!
-</p>

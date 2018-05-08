@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Регистрация</title>
+
+    <link rel="stylesheet" href="mobile.css">
+
+</head>
+
+<body>
+
+<div class="main-content">
+
+    <div class="form-mini-container">
+
+
+        <h1>Регистрация</h1>
+
+        <form class="form-mini" method="get" action="/dash.html">
+
+            <div class="form-row">
+                Регистрация выполнена.
+            </div>
+
+            <div class="form-row">
+                <button type="submit">Продолжить</button>
+            </div>
+            <div class="form-row">
+                <a href="/">На главную</a>
+            </div>
+
+        </form>
+    </div>
+
+
+</div>
+
+<script>
+    var k = document.getElementById("key");
+    k.value = localStorage.getItem('code');
+
+    function saveKey() {
+        localStorage.setItem('code', k.value);
+    }
+</script>
+
+</body>
+
+</html>

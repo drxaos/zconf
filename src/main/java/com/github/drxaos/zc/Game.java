@@ -45,7 +45,8 @@ public class Game {
 
     protected AtomicIntegerArray zx = new AtomicIntegerArray(999); // x-координаты зайцев
     protected AtomicIntegerArray zy = new AtomicIntegerArray(999); // y-координаты зайцев
-    protected AtomicLongArray zwait = new AtomicLongArray(999); // таймауты зайцев
+    protected AtomicLongArray zwait = new AtomicLongArray(999); // таймауты движения зайцев
+    protected AtomicLongArray lwait = new AtomicLongArray(999); // таймауты получения карты
 
     protected AtomicInteger activeRequests = new AtomicInteger(0); // количество исполняющихся запросов
     protected AtomicBoolean observerLock = new AtomicBoolean(false); // глобальная блокировка
@@ -112,7 +113,7 @@ public class Game {
         int i, x, y, xy;
         i = zidtoi(zid);
 
-        if (!checkTimeout(i)) {
+        if (!checkMoveTimeout(i)) {
             return "" + ANS_WAIT;
         }
 
@@ -122,6 +123,12 @@ public class Game {
         while (true) {
             x = zx.get(i);
             y = zy.get(i);
+            if (x < 0 || y < 0) {
+                // экстренно выходим
+                zwait.set(i, System.currentTimeMillis() + WAIT_STEP);
+                activeRequests.decrementAndGet();
+                return "" + WAIT_STEP;
+            }
             xy = xytoi(x, y);
 
             while (!colLock.compareAndSet(x, 0, zid)) ;
@@ -250,16 +257,29 @@ public class Game {
     public String look(int zid) {
         int i = zidtoi(zid);
 
-        if (!checkTimeout(i)) {
+        if (!checkLookTimeout(i)) {
             return "" + ANS_WAIT;
         }
 
-        zwait.set(i, System.currentTimeMillis() + WAIT_LOOK);
+        lwait.set(i, System.currentTimeMillis() + WAIT_LOOK);
 
         return snapshot;
     }
 
-    protected boolean checkTimeout(int i) {
+    protected boolean checkLookTimeout(int i) {
+        // проверяем таймаут
+        long after = lwait.get(i);
+        if (after > System.currentTimeMillis()) {
+            return false;
+        }
+        if (!lwait.compareAndSet(i, after, Long.MAX_VALUE)) {
+            // двойное присвоение
+            return false;
+        }
+        return true;
+    }
+
+    protected boolean checkMoveTimeout(int i) {
         // проверяем таймаут
         long after = zwait.get(i);
         if (after > System.currentTimeMillis()) {

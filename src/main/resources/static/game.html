@@ -6,8 +6,18 @@
 </div>
 
 <style>
+    @font-face {
+        font-family: DejaVuSansMono;
+        src: url(/DejaVuSansMono.ttf);
+    }
+
+    * {
+        font-family: DejaVuSansMono !important;
+    }
+
     body, html {
         background-color: black;
+
     }
 
     div {
@@ -51,7 +61,7 @@
     };
 
     var key = "";
-    var w = 0, h = 0, s1 = 0, s2 = 0, id = 0, kd = 0;
+    var w = 0, h = 0, s1 = 0, s2 = 0, id = 0, kd = 0, c = 0;
     var rating = [];
     var session = 0;
 
@@ -71,6 +81,43 @@
         if (e.type == "keydown") {
             if (e.keyCode >= 37 && e.keyCode <= 40) {
                 kd = e.keyCode;
+
+                if (kd > 0) {
+                    if (kd === 37) {
+                        console.log("left");
+                        kd = 0;
+                        ajax("/left/" + key, function (data) {
+                            if (parseInt(data) < 0) {
+                                console.log("left fail");
+                            }
+                        });
+                    } else if (kd === 38) {
+                        console.log("up");
+                        kd = 0;
+                        ajax("/up/" + key, function (data) {
+                            if (parseInt(data) < 0) {
+                                console.log("up fail");
+                            }
+                        });
+                    } else if (kd === 39) {
+                        console.log("right");
+                        kd = 0;
+                        ajax("/right/" + key, function (data) {
+                            if (parseInt(data) < 0) {
+                                console.log("right fail");
+                            }
+                        });
+                    } else if (kd === 40) {
+                        console.log("down");
+                        kd = 0;
+                        ajax("/down/" + key, function (data) {
+                            if (parseInt(data) < 0) {
+                                console.log("down fail");
+                            }
+                        });
+                    }
+                }
+
             } else {
                 return true;
             }
@@ -91,219 +138,190 @@
     var p = document.getElementById("map");
 
     setInterval(function () {
+        c++;
 
         var k = document.getElementById("key");
 
-        if (!key && !k) {
-            var s = "";
-            s += "╓─────[API ACCESS]─────╖\n";
-            s += "║                      ║\n";
-            s += "║ KEY [" +
-                "<input autofocus id='key' type='password' maxlength='14' style='width: 10.54rem;height: 20px;padding:0;border:none;outline:none;font-size: 20px;color: green;background-color: #111;font-family:Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;'/>" +
-                "] ║\n";
-            s += "║                      ║\n";
-            s += "╙──────────────────────╜\n";
-            p.innerHTML = s;
+        if (c % 6 == 0) {
+            if (!key && !k) {
+                var s = "";
+                s += "╓─────[API ACCESS]──[<a href='/' onmousedown='window.location.href=\"/\"'>x</a>]╖\n";
+                s += "║                      ║\n";
+                s += "║ KEY [" +
+                    "<input autofocus id='key' type='password' maxlength='14' style='width: 10.54rem;height: 20px;padding:0;border:none;outline:none;font-size: 20px;color: green;background-color: #111;font-family:Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;'/>" +
+                    "] ║\n";
+                s += "║                      ║\n";
+                s += "╙──────────────────────╜\n";
+                p.innerHTML = s;
 
-            k = document.getElementById("key");
-            k.value = localStorage.getItem('code');
+                k = document.getElementById("key");
+                k.value = localStorage.getItem('code');
 
-            return;
-        }
-
-        if (!key) {
-            var kv = k.value;
-            if (kv && kv.length > 0) {
-                ajax("/auth/" + kv, function (data) {
-                    var d = JSON.parse(data);
-                    if (d > 0) {
-                        key = kv;
-                        id = d;
-                        localStorage.setItem('code', k.value);
-                    }
-                    if (d === -5) {
-                        // не пройдена регистрация
-                        window.location.href = "/reg.html";
-                    }
-                });
-            }
-            return;
-        }
-
-        if (w === 0 || h === 0) {
-            ajax("/size/" + key, function (data) {
-                var d = JSON.parse(data);
-                w = d[0];
-                h = d[1];
-            });
-            return;
-        }
-        ajax("/score/" + key, function (data) {
-            var d = JSON.parse(data);
-            s1 = d[0];
-            s2 = d[1];
-        });
-        ajax("/rating/" + key, function (data) {
-            rating = JSON.parse(data);
-        });
-        ajax("/session/" + key, function (data) {
-            session = JSON.parse(data);
-        });
-
-        if (kd > 0) {
-            if (kd === 37) {
-                console.log("left");
-                ajax("/left/" + key, function (data) {
-                    if (parseInt(data) < 0) {
-                        console.log("left fail");
-                    }
-                });
-            } else if (kd === 38) {
-                console.log("up");
-                ajax("/up/" + key, function (data) {
-                    if (parseInt(data) < 0) {
-                        console.log("up fail");
-                    }
-                });
-            } else if (kd === 39) {
-                console.log("right");
-                ajax("/right/" + key, function (data) {
-                    if (parseInt(data) < 0) {
-                        console.log("right fail");
-                    }
-                });
-            } else if (kd === 40) {
-                console.log("down");
-                ajax("/down/" + key, function (data) {
-                    if (parseInt(data) < 0) {
-                        console.log("down fail");
-                    }
-                });
-            }
-            kd = 0;
-            return;
-        }
-
-        ajax("/look/" + key, function (data) {
-            console.log("look");
-            var map = JSON.parse(data);
-            if (!(map instanceof Array)) {
-                console.log("look fail");
                 return;
             }
 
-            var s = "";
-            s += "╓";
-
-            var x, y;
-            for (x = 0; x < w; x++) {
-                s += "─";
-            }
-            s += "╥──────[<span style='color: lime'>Зайцы и капуста</span>]──────╖";
-
-            s += "\n";
-            for (y = 0; y < h; y++) {
-                s += "║";
-                for (x = 0; x < w; x++) {
-
-                    var xy = x + y * w;
-                    var o = map[xy];
-                    switch (o) {
-                        case 0:
-                            s += ".";
-                            break;
-                        case 1:
-                            s += "<span style='color: red;'>#</span>";
-                            break;
-                        case 2:
-                            s += "<span style='color: lime;'>$</span>";
-                            break;
-                        case 10:
-                            s += "<span style='color: white;'>O</span>";
-                            break;
-                        case 20:
-                            s += "<span style='color: darkgray;'>O</span>";
-                            break;
-                        default:
-                            s += "<span style='color: white;' " + (o === id ? 'class="active"' : '') + ">Z</span>";
-                            break;
-                    }
-
-                }
-                s += "║";
-
-                if (id !== 100 && y === 1) {
-                    s += "  <span style='color: white'>Текущий счет</span>  <span style='color: lime'>" + s1 + "</span>"
-                }
-                if (id !== 100 && y === 2) {
-                    s += "  <span style='color: white'>Максимальный счет</span>  <span style='color: lime'>" + s2 + "</span>"
-                }
-
-                if (id !== 100 && y === 4) {
-                    s += "  <span style='color: darkgray'>ZID</span>  <span style='color: lime'>" + id + "</span>"
-                }
-                if (id !== 100 && y === 5) {
-                    if (session > 0) {
-                        var sessStr = "" + Math.round(session / 1000) + " сек";
-                        if (session > 100000) {
-                            sessStr = "" + Math.round(session / 60 / 1000) + " мин";
+            if (!key) {
+                var kv = k.value;
+                if (kv && kv.length > 0) {
+                    ajax("/auth/" + kv, function (data) {
+                        var d = JSON.parse(data);
+                        if (d > 0) {
+                            key = kv;
+                            id = d;
+                            localStorage.setItem('code', k.value);
                         }
-                        s += "  <span style='color: darkgray'>Раунд</span>  <span style='color: lime'>" + sessStr + "</span> <a href='#' onclick='startGame()' style='text-decoration: none; cursor: pointer'><span style='color: black; background-color: red'> ↺ </span></a>";
-                    } else {
-                        s += "  <span style='color: darkgray'>Раунд закончен</span>";
+                        if (d === -5) {
+                            // не пройдена регистрация
+                            window.location.href = "/reg.html";
+                        }
+                    });
+                }
+                return;
+            }
+
+            if (w === 0 || h === 0) {
+                ajax("/size/" + key, function (data) {
+                    var d = JSON.parse(data);
+                    w = d[0];
+                    h = d[1];
+                });
+                return;
+            }
+            ajax("/score/" + key, function (data) {
+                var d = JSON.parse(data);
+                s1 = d[0];
+                s2 = d[1];
+            });
+            ajax("/rating/" + key, function (data) {
+                rating = JSON.parse(data);
+            });
+            ajax("/session/" + key, function (data) {
+                session = JSON.parse(data);
+            });
+        }
+
+        if (c % 3 == 0) {
+            ajax("/look/" + key, function (data) {
+                console.log("look");
+                var map = JSON.parse(data);
+                if (!(map instanceof Array)) {
+                    console.log("look fail");
+                    return;
+                }
+
+                var s = "";
+                s += "╓";
+
+                var x, y;
+                for (x = 0; x < w; x++) {
+                    s += "─";
+                }
+                s += "╥──────[<span style='color: lime'>Зайцы и капуста</span>]───[<a href='/' onmousedown='window.location.href=\"/\"'>x</a>]╖";
+
+                s += "\n";
+                for (y = 0; y < h; y++) {
+                    s += "║";
+                    for (x = 0; x < w; x++) {
+
+                        var xy = x + y * w;
+                        var o = map[xy];
+                        switch (o) {
+                            case 0:
+                                s += ".";
+                                break;
+                            case 1:
+                                s += "<span style='color: red;'>#</span>";
+                                break;
+                            case 2:
+                                s += "<span style='color: lime;'>$</span>";
+                                break;
+                            case 10:
+                                s += "<span style='color: white;'>O</span>";
+                                break;
+                            case 20:
+                                s += "<span style='color: darkgray;'>O</span>";
+                                break;
+                            default:
+                                s += "<span style='color: white;' " + (o === id ? 'class="active"' : '') + ">Z</span>";
+                                break;
+                        }
+
                     }
+                    s += "║";
+
+                    if (id !== 100 && y === 1) {
+                        s += "  <span style='color: white'>Текущий счет</span>  <span style='color: lime'>" + s1 + "</span>"
+                    }
+                    if (id !== 100 && y === 2) {
+                        s += "  <span style='color: white'>Максимальный счет</span>  <span style='color: lime'>" + s2 + "</span>"
+                    }
+
+                    if (id !== 100 && y === 4) {
+                        s += "  <span style='color: darkgray'>ZID</span>  <span style='color: lime'>" + id + "</span>"
+                    }
+                    if (id !== 100 && y === 5) {
+                        if (session > 0) {
+                            var sessStr = "" + Math.round(session / 1000) + " сек";
+                            if (session > 100000) {
+                                sessStr = "" + Math.floor(Math.round(session / 1000) / 60) + " мин " + (Math.round(session / 1000) % 60) + " сек";
+                            }
+                            s += "  <span style='color: darkgray'>Раунд</span>  <span style='color: lime'>" + sessStr + "</span> <a href='#' onmousedown='startGame()' style='text-decoration: none; cursor: pointer'><span style='color: black; background-color: red'> ↺ </span></a>";
+                        } else {
+                            s += "  <span style='color: darkgray'>Раунд закончен</span>";
+                        }
+                    }
+
+                    var lnum = 1;
+                    if (id === 100 && (y >= lnum && rating.length > y - lnum)) {
+                        var n1 = rating[y - lnum].n.substring(0, 12);
+                        var n2 = rating[y - lnum].n.substring(12, 13);
+                        var n3 = rating[y - lnum].n.substring(13, 14);
+                        s += "  <span style='color: " + (rating[y - lnum].z < 200 ? "white" : "darkgray") + "'>Z" + rating[y - lnum].z + "</span>  <span style='color: lime'>" + ("" + rating[y - lnum].s).padStart(4) + "</span> <span style='color: skyblue'>" + n1 + "</span><span style='color: #4a7181'>" + n2 + "</span><span style='color: #1e2e34'>" + n3 + "</span>";
+                    }
+
+                    lnum = 7;
+                    if (id !== 100 && (y >= lnum && rating.length > y - lnum)) {
+                        var n1 = rating[y - lnum].n.substring(0, 12);
+                        var n2 = rating[y - lnum].n.substring(12, 13);
+                        var n3 = rating[y - lnum].n.substring(13, 14);
+                        s += "  <span style='color: " + (rating[y - lnum].z < 200 ? "white" : "darkgray") + "'>Z" + rating[y - lnum].z + "</span>  <span style='color: lime'>" + ("" + rating[y - lnum].s).padStart(4) + "</span> <span style='color: skyblue'>" + n1 + "</span><span style='color: #4a7181'>" + n2 + "</span><span style='color: #1e2e34'>" + n3 + "</span>";
+                    }
+
+                    if (id !== 100 && session === 0 && y == h - 4) {
+                        s += "  <a href='#' onmousedown='startGame()' style='text-decoration: none; cursor: pointer'><span style='color: black; background-color: gold'>                         </span></a>"
+                    }
+                    if (id !== 100 && session === 0 && y == h - 3) {
+                        s += "  <a href='#' onmousedown='startGame()' style='text-decoration: none; cursor: pointer'><span style='color: black; background-color: gold'>       Начать игру!      </span></a>"
+                    }
+                    if (id !== 100 && session === 0 && y == h - 2) {
+                        s += "  <a href='#' onmousedown='startGame()' style='text-decoration: none; cursor: pointer'><span style='color: black; background-color: gold'>                         </span></a>"
+                    }
+
+                    var text = s.replace(/(<([^>]+)>)/ig, "");
+                    var spaces = text.indexOf("\n") - (text.length - text.lastIndexOf("\n"));
+                    for (var i = 0; i < spaces; i++) {
+                        s += " ";
+                    }
+                    s += "║\n";
                 }
 
-                var lnum = 1;
-                if (id === 100 && (y >= lnum && rating.length > y - lnum)) {
-                    var n1 = rating[y - lnum].n.substring(0, 12);
-                    var n2 = rating[y - lnum].n.substring(12, 13);
-                    var n3 = rating[y - lnum].n.substring(13, 14);
-                    s += "  <span style='color: " + (rating[y - lnum].z < 200 ? "white" : "darkgray") + "'>Z" + rating[y - lnum].z + "</span>  <span style='color: lime'>" + ("" + rating[y - lnum].s).padStart(4) + "</span> <span style='color: skyblue'>" + n1 + "</span><span style='color: #4a7181'>" + n2 + "</span><span style='color: #1e2e34'>" + n3 + "</span>";
-                }
+                s += "╙";
 
-                lnum = 7;
-                if (id !== 100 && (y >= lnum && rating.length > y - lnum)) {
-                    var n1 = rating[y - lnum].n.substring(0, 12);
-                    var n2 = rating[y - lnum].n.substring(12, 13);
-                    var n3 = rating[y - lnum].n.substring(13, 14);
-                    s += "  <span style='color: " + (rating[y - lnum].z < 200 ? "white" : "darkgray") + "'>Z" + rating[y - lnum].z + "</span>  <span style='color: lime'>" + ("" + rating[y - lnum].s).padStart(4) + "</span> <span style='color: skyblue'>" + n1 + "</span><span style='color: #4a7181'>" + n2 + "</span><span style='color: #1e2e34'>" + n3 + "</span>";
+                for (x = 0; x < w; x++) {
+                    s += "─";
                 }
-
-                if (id !== 100 && session === 0 && y == h - 4) {
-                    s += "  <a href='#' onclick='startGame()' style='text-decoration: none; cursor: pointer'><span style='color: black; background-color: gold' onclick='startGame()'>                         </span></a>"
-                }
-                if (id !== 100 && session === 0 && y == h - 3) {
-                    s += "  <a href='#' onclick='startGame()' style='text-decoration: none; cursor: pointer'><span style='color: black; background-color: gold' onclick='startGame()'>       Начать игру!      </span></a>"
-                }
-                if (id !== 100 && session === 0 && y == h - 2) {
-                    s += "  <a href='#' onclick='startGame()' style='text-decoration: none; cursor: pointer'><span style='color: black; background-color: gold' onclick='startGame()'>                         </span></a>"
-                }
+                s += "╨";
 
                 var text = s.replace(/(<([^>]+)>)/ig, "");
                 var spaces = text.indexOf("\n") - (text.length - text.lastIndexOf("\n"));
                 for (var i = 0; i < spaces; i++) {
-                    s += " ";
+                    s += "─";
                 }
-                s += "║\n";
-            }
+                s += "╜";
 
-            s += "╙";
-
-            for (x = 0; x < w; x++) {
-                s += "─";
-            }
-            s += "╨";
-
-            var text = s.replace(/(<([^>]+)>)/ig, "");
-            var spaces = text.indexOf("\n") - (text.length - text.lastIndexOf("\n"));
-            for (var i = 0; i < spaces; i++) {
-                s += "─";
-            }
-            s += "╜";
-
-            p.innerHTML = s;
-        });
-    }, 200);
+                p.innerHTML = s;
+            });
+        }
+    }, 50);
 </script>
 

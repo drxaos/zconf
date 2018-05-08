@@ -25,11 +25,12 @@
         <form class="form-mini" method="post" action="/register" onsubmit="saveKey()">
 
             <div class="form-row">
-                <input type="password" name="key" id="key" placeholder="Код (обязательное)">
+                <input type="text" name="key" id="key" placeholder="Код">
             </div>
 
             <div class="form-row">
-                <input type="text" name="name" placeholder="Имя Фамилия (обязательное)">
+                <input type="text" name="name" placeholder="Имя Фамилия">
+                <sub>Напишите свое имя, чтобы мы знали, кому вручать приз.</sub>
             </div>
 
             <div class="form-row">
@@ -44,8 +45,11 @@
                 <input type="text" name="comment" placeholder="Интересы">
             </div>
 
-            <div class="form-row form-last-row">
+            <div class="form-row">
                 <button type="submit">Отправить</button>
+            </div>
+            <div class="form-row">
+                <a href="/">На главную</a>
             </div>
 
         </form>

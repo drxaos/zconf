@@ -22,21 +22,27 @@
         <h1>Управление</h1>
 
         <form class="form-mini">
-
-            <div class="form-row ">
-                Счет 123<br/>
-                Время 123<br/>
+            <div class="form-row">
+                <input type="text" name="key" id="key" placeholder="Код">
             </div>
 
             <div class="form-row ">
-                <button type="button">Вверх</button>
+                <div id="scor">Счет</div>
+                <div id="sess">Время</div>
+            </div>
+
+            <div class="form-row">
+                <button type="button" style="width: 40%; height: 80px; margin-left: 30%" onclick="move('up')">Вверх</button>
             </div>
             <div class="form-row ">
-                <button type="button" style="width: 40%; float: right;">Вправо</button>
-                <button type="button" style="width: 40%;">Влево</button>
+                <button type="button" style="width: 40%; height: 80px; float: right;" onclick="move('right')">Вправо</button>
+                <button type="button" style="width: 40%; height: 80px" onclick="move('left')">Влево</button>
             </div>
             <div class="form-row">
-                <button type="button">Вниз</button>
+                <button type="button" onclick="move('down')">Вниз</button>
+            </div>
+            <div class="form-row">
+                <a href="/dash.html">Назад</a>
             </div>
 
         </form>
@@ -46,6 +52,12 @@
 </div>
 
 <script>
+    var k = document.getElementById("key");
+    k.value = localStorage.getItem('code');
+
+    var sess = document.getElementById("sess");
+    var scor = document.getElementById("scor");
+
     var ajax = function (url, callback) {
         var xmlHTTP = new XMLHttpRequest();
         xmlHTTP.onreadystatechange = function () {
@@ -56,6 +68,40 @@
         xmlHTTP.send();
     };
 
+    function move(dir) {
+        ajax("/" + dir + "/" + k.value, function (data) {
+            if (parseInt(data) < 0) {
+                console.log("left fail");
+            }
+        });
+    }
+
+    setInterval(function () {
+        if (!k.value) {
+            localStorage.removeItem('code');
+        } else {
+            localStorage.setItem('code', k.value);
+        }
+
+        ajax("/score/" + k.value, function (data) {
+            var d = JSON.parse(data);
+            s1 = d[0];
+            s2 = d[1];
+            scor.innerHTML = "Счет: " + s1 + " / Максимальный: " + s2;
+        });
+        ajax("/session/" + k.value, function (data) {
+            session = JSON.parse(data);
+            if (session > 0) {
+                var sessStr = "" + Math.round(session / 1000) + " сек";
+                if (session > 100000) {
+                    sessStr = "" + Math.floor(Math.round(session / 1000) / 60) + " мин " + (Math.round(session / 1000) % 60) + " сек";
+                }
+                sess.innerHTML = "Раунд: " + sessStr;
+            } else {
+                sess.innerHTML = "Раунд закончен";
+            }
+        });
+    }, 1000);
 </script>
 
 </body>

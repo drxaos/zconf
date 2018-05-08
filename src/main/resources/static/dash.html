@@ -23,15 +23,21 @@
         <h1>Таблица рекордов</h1>
 
         <form class="form-mini">
-
             <div class="form-row">
-                <button type="button">Начать игру!</button>
+                <input type="text" name="key" id="key" placeholder="Код">
             </div>
 
             <div class="form-row">
-                Игрок 1
+                <button type="button" onclick="startGame()">Начать игру!</button>
             </div>
 
+            <div class="form-row">
+                <a href="/">На главную</a>
+            </div>
+
+            <div class="form-row">
+                <div id="rtng">Рейтинг</div>
+            </div>
         </form>
     </div>
 
@@ -39,6 +45,10 @@
 </div>
 
 <script>
+    var k = document.getElementById("key");
+    k.value = localStorage.getItem('code');
+
+    var rtng = document.getElementById("rtng");
 
     var ajax = function (url, callback) {
         var xmlHTTP = new XMLHttpRequest();
@@ -50,6 +60,33 @@
         xmlHTTP.send();
     };
 
+    function startGame() {
+        ajax("/start/" + k.value, function (data) {
+            window.location.href = "/ctrl.html";
+        });
+    }
+
+    setInterval(function () {
+        if (!k.value) {
+            localStorage.removeItem('code');
+        } else {
+            localStorage.setItem('code', k.value);
+        }
+
+        ajax("/rating/" + k.value, function (data) {
+            rating = JSON.parse(data);
+            if (rating === -5) {
+                // не пройдена регистрация
+                window.location.href = "/reg.html";
+            }
+            var r = "<table border='0' cellspacing='10' cellpadding='20'>";
+            rating.forEach(function (p, idx) {
+                r += "<tr><td><b>" + p.s + "</b></td><td>" + p.n + "</td></tr>"
+            });
+            r += "</table>";
+            rtng.innerHTML = r;
+        });
+    }, 1000);
 </script>
 
 </body>
