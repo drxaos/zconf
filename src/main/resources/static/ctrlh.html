@@ -17,11 +17,20 @@
 
 <div class="main-content">
 
-    <div class="form-mini-container">
+    <div class="form-mini-container" style="max-width: 500px;">
 
         <h1>Управление</h1>
 
         <form class="form-mini">
+            <div class="form-row">
+                <button type="button" style="width: 32%; height: 80px; margin-left: 33%" onclick="move('up')">Вверх</button>
+            </div>
+            <div class="form-row ">
+                <button type="button" style="width: 32%; height: 80px; display: inline-block" onclick="move('right')">Вправо</button>
+                <button type="button" style="width: 32%; height: 80px; display: inline-block" onclick="move('down')">Вниз</button>
+                <button type="button" style="width: 32%; height: 80px; display: inline-block" onclick="move('left')">Влево</button>
+            </div>
+
             <div class="form-row">
                 <input type="text" name="key" id="key" placeholder="Код">
             </div>
@@ -32,19 +41,9 @@
             </div>
 
             <div class="form-row">
-                <a href="/ctrlh.html">Горизонтально</a>
+                <a href="/ctrl.html">Вертикально</a>
             </div>
 
-            <div class="form-row">
-                <button type="button" style="width: 40%; height: 80px; margin-left: 30%" onclick="move('up')">Вверх</button>
-            </div>
-            <div class="form-row ">
-                <button type="button" style="width: 40%; height: 80px; float: right;" onclick="move('right')">Вправо</button>
-                <button type="button" style="width: 40%; height: 80px" onclick="move('left')">Влево</button>
-            </div>
-            <div class="form-row">
-                <button type="button" style="width: 40%; height: 80px; margin-left: 30%" onclick="move('down')">Вниз</button>
-            </div>
             <div class="form-row">
                 <a href="/dash.html">Назад</a>
             </div>

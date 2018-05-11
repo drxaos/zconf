@@ -1,6 +1,7 @@
 package com.github.drxaos.zc;
 
 import org.rapidoid.http.Req;
+import org.rapidoid.http.Resp;
 import org.rapidoid.setup.Setup;
 
 import java.util.Map;
@@ -86,7 +87,8 @@ public class Server implements Runnable {
 
         setup.get("/").html((Req x) -> x.response().redirect("/index.html"));
 
-        setup.get("/size/{key}").plain((String key) -> {
+        setup.get("/size/{key}").plain((Resp resp, String key) -> {
+            resp.header("Access-Control-Allow-Origin", "*");
             // [W, H]
             try {
                 int zid = auth(key);
@@ -100,7 +102,8 @@ public class Server implements Runnable {
             }
         });
 
-        setup.get("/score/{key}").plain((String key) -> {
+        setup.get("/score/{key}").plain((Resp resp, String key) -> {
+            resp.header("Access-Control-Allow-Origin", "*");
             // [Current score, Max score]
             try {
                 int zid = auth(key);
@@ -114,7 +117,8 @@ public class Server implements Runnable {
             }
         });
 
-        setup.get("/rating/{key}").plain((String key) -> {
+        setup.get("/rating/{key}").plain((Resp resp, String key) -> {
+            resp.header("Access-Control-Allow-Origin", "*");
             // [ZID 1, "Name 1", Max score 1, ZID 2, "Name 2", Max score 2, ...]
             try {
                 int zid = auth(key);
@@ -128,7 +132,9 @@ public class Server implements Runnable {
             }
         });
 
-        setup.post("/register").plain((Req req) -> {
+        setup.post("/register").plain((Resp resp, Req req) -> {
+            resp.header("Access-Control-Allow-Origin", "*");
+
             String key = req.data("key");
             String name = req.data("name");
             String email = req.data("email");
@@ -155,7 +161,8 @@ public class Server implements Runnable {
         });
 
         Map<String, Long> ipwait = new ConcurrentHashMap<>();
-        setup.get("/auth/{key}").plain((Req req) -> {
+        setup.get("/auth/{key}").plain((Resp resp, Req req) -> {
+            resp.header("Access-Control-Allow-Origin", "*");
             // ID
             try {
                 String key = req.param("key");
@@ -179,7 +186,8 @@ public class Server implements Runnable {
             }
         });
 
-        setup.get("/look/{key}").plain((String key) -> {
+        setup.get("/look/{key}").plain((Resp resp, String key) -> {
+            resp.header("Access-Control-Allow-Origin", "*");
             // [map] OR -3
 //            long start = System.nanoTime();
             try {
@@ -196,7 +204,8 @@ public class Server implements Runnable {
             }
         });
 
-        setup.get("/start/{key}").plain((String key) -> {
+        setup.get("/start/{key}").plain((Resp resp, String key) -> {
+            resp.header("Access-Control-Allow-Origin", "*");
             // MS till end
             try {
                 int zid = auth(key);
@@ -213,7 +222,8 @@ public class Server implements Runnable {
             }
         });
 
-        setup.get("/session/{key}").plain((String key) -> {
+        setup.get("/session/{key}").plain((Resp resp, String key) -> {
+            resp.header("Access-Control-Allow-Origin", "*");
             // MS till end
             try {
                 int zid = auth(key);
@@ -230,7 +240,8 @@ public class Server implements Runnable {
             }
         });
 
-        setup.get("/up/{key}").plain((String key) -> {
+        setup.get("/up/{key}").plain((Resp resp, String key) -> {
+            resp.header("Access-Control-Allow-Origin", "*");
             // MS OR -1
             try {
                 int zid = auth(key);
@@ -250,7 +261,8 @@ public class Server implements Runnable {
             }
         });
 
-        setup.get("/down/{key}").plain((String key) -> {
+        setup.get("/down/{key}").plain((Resp resp, String key) -> {
+            resp.header("Access-Control-Allow-Origin", "*");
             // MS OR -1
             try {
                 int zid = auth(key);
@@ -270,7 +282,8 @@ public class Server implements Runnable {
             }
         });
 
-        setup.get("/left/{key}").plain((String key) -> {
+        setup.get("/left/{key}").plain((Resp resp, String key) -> {
+            resp.header("Access-Control-Allow-Origin", "*");
             // MS OR -1
             try {
                 int zid = auth(key);
@@ -290,7 +303,8 @@ public class Server implements Runnable {
             }
         });
 
-        setup.get("/right/{key}").plain((String key) -> {
+        setup.get("/right/{key}").plain((Resp resp, String key) -> {
+            resp.header("Access-Control-Allow-Origin", "*");
             // MS OR -1
             try {
                 int zid = auth(key);

@@ -14,7 +14,7 @@ public class ResetDatabase {
         while (codes.size() < 500) {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < 10; i++) {
-                sb.append((char) ('A' + (int) (r.nextDouble() * 26)));
+                sb.append((char) ('0' + (int) (r.nextDouble() * 10)));
             }
             codes.add(sb.toString());
         }
