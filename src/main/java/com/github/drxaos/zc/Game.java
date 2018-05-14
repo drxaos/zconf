@@ -104,7 +104,8 @@ public class Game {
     }
 
 
-    public String move(int zid, int dx, int dy) {
+    // TODO разобраться с дедлоком и убрать synchronized
+    public synchronized String move(int zid, int dx, int dy) {
 
         if (zid < Z) {
             return "" + ANS_ERROR;
