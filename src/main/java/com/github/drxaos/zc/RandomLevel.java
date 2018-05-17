@@ -28,7 +28,7 @@ public class RandomLevel implements Level {
                 (int) (r.nextDouble() * game.getH() / 5) + game.getH() / 5 * 3));
 
         while (points.size() < treeCount + gCount + z.size() + 2) {
-            points.add(new Point((int) (r.nextDouble() * game.getW()), (int) (r.nextDouble() * game.getH())));
+            points.add(new Point((int) (r.nextDouble() * (game.getW() - 4)) + 2, (int) (r.nextDouble() * (game.getH() - 4)) + 2));
         }
 
         state.set(o1.x, o1.y, Game.O);

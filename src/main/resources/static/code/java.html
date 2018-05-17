@@ -1,0 +1,384 @@
+<!doctype html>
+
+<link rel="stylesheet" href="codemirror.css">
+<link rel="stylesheet" href="fullscreen.css">
+<script src="codemirror.js"></script>
+<script src="clike.js"></script>
+<script src="fullscreen.js"></script>
+<script src="panel.js"></script>
+
+<div id="panel">
+    <button onclick="runCode()" type="button" disabled="disabled">Run code</button>
+</div>
+<form>
+  <textarea id="code" name="code">
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class Bot {
+
+    interface Callback {
+        void call(String data);
+    }
+
+    String baseUrl = "http://localhost:9999";
+
+    // **** Взаимодействие с API ****
+
+    void ajax(String url, Callback callback) {
+        try {
+            URL u = new URL(baseUrl + url);
+            InputStream in = u.openStream();
+            String result = new BufferedReader(new InputStreamReader(in)).lines().collect(Collectors.joining("\n"));
+            callback.call(result);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    void ajax(String url) {
+        ajax(url, data -> {
+        });
+    }
+
+    List&lt;Integer&gt; parseArray(String json) {
+        return Arrays.stream(json.split("[^0-9-]+")).filter((s) -> !s.isEmpty()).map((s) -> Integer.parseInt(s)).collect(Collectors.toList());
+    }
+
+    // **** Текущее состояние ****
+
+    String key = "XVSWCVAXON";
+    int myId = -1;
+    int timeout = 1000;
+    List&lt;Integer&gt; map;
+    int width, height;
+
+
+    // **** Вспомогательные функции ****
+
+    void move(String dir) {
+        ajax("/" + dir + "/" + key, (data) -> {
+            if (Integer.parseInt(data) == -6) {
+                auth();
+                size();
+                start();
+            }
+            timeout = Math.max(Integer.parseInt(data), 100);
+        });
+    }
+
+    void left() {
+        move("left");
+    }
+
+    void right() {
+        move("right");
+    }
+
+    void up() {
+        move("up");
+    }
+
+    void down() {
+        move("down");
+    }
+
+    void auth() {
+        ajax("/auth/" + key, (data) -> {
+            myId = Integer.parseInt(data);
+        });
+    }
+
+    void size() {
+        ajax("/size/" + key, (data) -> {
+            List&lt;Integer&gt; d = parseArray(data);
+            width = d.get(0);
+            height = d.get(1);
+        });
+    }
+
+    void start() {
+        ajax("/start/" + key);
+    }
+
+    int find(int cell) {
+        return map.indexOf(cell);
+    }
+
+    List&lt;Integer&gt; findAll(int cell) {
+        ArrayList&lt;Integer&gt; indexList = new ArrayList<>();
+        for (int i = 0; i < map.size(); i++) {
+            if (map.get(i) == cell) {
+                indexList.add(i);
+            }
+        }
+        return indexList;
+    }
+
+    int idxToX(int idx) {
+        return idx % width;
+    }
+
+    int idxToY(int idx) {
+        return idx / width;
+    }
+
+    int xyToIdx(int x, int y) {
+        return ((x + width) % width) + ((y + height) % height) * width;
+    }
+
+    int idxMove(int idx, int dx, int dy) {
+        int x = idxToX(idx);
+        int y = idxToY(idx);
+        x += dx;
+        y += dy;
+        return xyToIdx(x, y);
+    }
+
+    int nearest(int fromIndex, List&lt;Integer&gt; toIndexes) {
+        int x0 = idxToX(fromIndex);
+        int y0 = idxToY(fromIndex);
+
+        toIndexes.sort((idx1, idx2) -> {
+            int x1 = idxToX(idx1);
+            int y1 = idxToY(idx1);
+            int x2 = idxToX(idx2);
+            int y2 = idxToY(idx2);
+
+            int d01 = Math.abs(x0 - x1) + Math.abs(y0 - y1);
+            int d02 = Math.abs(x0 - x2) + Math.abs(y0 - y2);
+
+            return d01 - d02;
+        });
+
+        return toIndexes.get(0);
+    }
+
+    void dump(List&lt;Integer&gt; _map) {
+        int size = _map.size();
+        String dbg = "";
+        for (int i = 0; i < size; i++) {
+            if (i % width == 0) {
+                dbg += "\n";
+            }
+            dbg += "|";
+            if (_map.get(i) < 10) dbg += " ";
+            if (_map.get(i) < 100) dbg += " ";
+            dbg += "" + _map.get(i);
+        }
+        System.out.println(dbg);
+    }
+
+    /**
+     * Поиск пути волновым методом
+     *
+     * @param fromIdx откуда
+     * @param toIdx   куда
+     * @returns массив индексов через которые нужно пройти, [] если никуда ходить не надо, undefined если пути нет
+     */
+    List&lt;Integer&gt; path(int fromIdx, int toIdx) {
+        fromIdx = idxMove(fromIdx, 0, 0);
+        toIdx = idxMove(toIdx, 0, 0);
+        int size = map.size();
+        List&lt;Integer&gt; tmp = Arrays.asList(new Integer[size]); // массив для поиска
+        int i;
+
+        if (fromIdx == toIdx) {
+            return new ArrayList<>();
+        }
+
+        for (i = 0; i < size; i++) {
+            tmp.set(i, 0);
+        }
+        tmp.set(fromIdx, 1);
+        tmp.set(toIdx, size);
+
+        //dump(tmp);
+
+        int n = 1;
+
+        // заполняем массив значениями дальности от исходной точки
+        wave:
+        while (true) {
+            for (i = 0; i < size; i++) {
+                if (
+                        tmp.get(idxMove(i, 0, 1)) == n ||
+                                tmp.get(idxMove(i, 0, -1)) == n ||
+                                tmp.get(idxMove(i, 1, 0)) == n ||
+                                tmp.get(idxMove(i, -1, 0)) == n
+                        ) {
+                    if (tmp.get(i) == 0 && map.get(i) != 1) {
+                        tmp.set(i, n + 1);
+                    }
+                    if (tmp.get(i) == size) {
+                        break wave;
+                    }
+                }
+
+            }
+            n++;
+            if (n > size) {
+                return null;
+            }
+        }
+
+        for (i = 0; i < size; i++) {
+            if (tmp.get(i) == n + 1) {
+                tmp.set(i, 0);
+            }
+        }
+
+        //dump(tmp);
+
+        // откатываем все значения из массива, кроме пути
+        List&lt;Integer&gt; p = new ArrayList<>();
+        p.add(toIdx); // последний элемент - целевая клетка
+        while (n > 1) {
+            boolean added = false;
+            for (i = 0; i < size; i++) {
+                if (
+                        tmp.get(i) == n
+                        ) {
+                    if (added) {
+                        tmp.set(i, 0);
+                    } else if (tmp.get(idxMove(i, 0, 1)) == n + 1 || tmp.get(idxMove(i, 0, 1)) == size ||
+                            tmp.get(idxMove(i, 0, -1)) == n + 1 || tmp.get(idxMove(i, 0, -1)) == size ||
+                            tmp.get(idxMove(i, 1, 0)) == n + 1 || tmp.get(idxMove(i, 1, 0)) == size ||
+                            tmp.get(idxMove(i, -1, 0)) == n + 1 || tmp.get(idxMove(i, -1, 0)) == size
+                            ) {
+                        p.add(0, i);
+                        added = true;
+                    } else {
+                        tmp.set(i, 0);
+                    }
+                }
+
+            }
+            n--;
+        }
+
+        //dump(tmp);
+
+        return p;
+    }
+
+
+    // **** Поехали ****
+
+    int step = 0;
+
+    void loop() {
+        ajax("/look/" + key, (data) -> {
+            System.out.println("step " + step++);
+
+            map = parseArray(data);
+
+            int me = find(myId);
+            List&lt;Integer&gt; greens = findAll(2);
+            int gr = nearest(me, greens);
+
+            int myX = idxToX(me);
+            int myY = idxToY(me);
+            int grX = idxToX(gr);
+            int grY = idxToY(gr);
+
+            List&lt;Integer&gt; p = path(me, gr);
+
+
+            if (p == null) {
+                // no way
+                return;
+            } else if (p.size() == 0) {
+                // go into gr
+                p.add(gr);
+            }
+
+            int next = p.get(0);
+
+            int nextX = idxToX(next);
+            int nextY = idxToY(next);
+
+            if (nextX > myX) {
+                right();
+            } else if (nextX < myX) {
+                left();
+            } else if (nextY > myY) {
+                down();
+            } else if (nextY < myY) {
+                up();
+            }
+
+        });
+    }
+
+    public void run() throws InterruptedException {
+        // **** Старт сессии ****
+        auth();
+        size();
+        start();
+
+        while (true) {
+            Thread.sleep(timeout + 50);
+            try {
+                loop();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        new Bot().run();
+    }
+}
+
+</textarea>
+</form>
+
+<script>
+    var textarea = document.getElementById("code");
+
+    var saved = localStorage.getItem("java");
+    if (saved) {
+        textarea.value = saved;
+    }
+
+    var editor = CodeMirror.fromTextArea(textarea, {
+        mode: "text/x-java",
+        matchBrackets: true,
+        json: true,
+        styleActiveLine: true,
+        lineNumbers: true,
+        lineWrapping: true,
+        fullScreen: true,
+        extraKeys: {
+            "F11": function (cm) {
+                cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+            }
+        }
+    });
+
+    editor.on("change", function (cm, change) {
+        localStorage.setItem('java', editor.getValue());
+    });
+
+    var node = document.getElementById("panel");
+    editor.addPanel(node, {position: "top", stable: true});
+
+    function runCode() {
+        var newWin = open('about:blank', 'runCodeWindow', 'height=300,width=300');
+        newWin.document.write("\<html\>\<body\>Running code...\<script\>" + editor.getValue() + "<" + "/script\>");
+    }
+
+    function resetCode() {
+        localStorage.removeItem("java");
+        location.reload();
+    }
+</script>
+

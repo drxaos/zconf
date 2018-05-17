@@ -1,0 +1,330 @@
+<!doctype html>
+
+<link rel="stylesheet" href="codemirror.css">
+<link rel="stylesheet" href="fullscreen.css">
+<script src="codemirror.js"></script>
+<script src="javascript.js"></script>
+<script src="fullscreen.js"></script>
+<script src="panel.js"></script>
+
+<div id="panel">
+    <button onclick="runCode()" type="button">Run code</button>
+</div>
+<form>
+  <textarea id="code" name="code">
+
+
+    // **** Взаимодействие с API ****
+
+    function ajax(url, callback) {
+        var xmlHTTP = new XMLHttpRequest();
+        xmlHTTP.onreadystatechange = function () {
+            if (this.readyState === 4 && this.status === 200)
+                callback && callback(this.responseText);
+        };
+        xmlHTTP.open("GET", url, true);
+        xmlHTTP.send();
+    }
+
+
+
+    // **** Текущее состояние ****
+
+    var key = "12345";
+    var myId = -1;
+    var timeout = 1000;
+    var map, width, height;
+
+
+
+    // **** Вспомогательные функции ****
+
+    function move(dir) {
+        ajax("/" + dir + "/" + key, function (data) {
+            if (parseInt(data) === -6) {
+                auth();
+                size();
+                start();
+            }
+            timeout = Math.max(parseInt(data), 100);
+        });
+    }
+    function left() {
+        move("left");
+    }
+    function right() {
+        move("right");
+    }
+    function up() {
+        move("up");
+    }
+    function down() {
+        move("down");
+    }
+    function auth() {
+        ajax("/auth/" + key, function (data) {
+            myId = parseInt(data);
+        });
+    }
+    function size() {
+        ajax("/size/" + key, function (data) {
+            var d = JSON.parse(data);
+            width = d[0];
+            height = d[1];
+        });
+    }
+    function start() {
+        ajax("/start/" + key);
+    }
+    function find(cell) {
+        return map.indexOf(cell);
+    }
+    function findAll(cell) {
+        var indexes = [], i = -1;
+        while ((i = map.indexOf(cell, i + 1)) != -1) {
+            indexes.push(i);
+        }
+        return indexes;
+    }
+    function idxToX(idx) {
+        return idx % width;
+    }
+    function idxToY(idx) {
+        return Math.floor(idx / width);
+    }
+    function xyToIdx(x, y) {
+        return ((x + width) % width) + ((y + height) % height) * width;
+    }
+    function idxMove(idx, dx, dy) {
+        var x = idxToX(idx);
+        var y = idxToY(idx);
+        x += dx;
+        y += dy;
+        return xyToIdx(x, y);
+    }
+    function nearest(fromIndex, toIndexes) {
+        var x0 = idxToX(fromIndex);
+        var y0 = idxToY(fromIndex);
+
+        toIndexes.sort(function (idx1, idx2) {
+            var x1 = idxToX(idx1);
+            var y1 = idxToY(idx1);
+            var x2 = idxToX(idx2);
+            var y2 = idxToY(idx2);
+
+            var d01 = Math.abs(x0 - x1) + Math.abs(y0 - y1);
+            var d02 = Math.abs(x0 - x2) + Math.abs(y0 - y2);
+
+            return d01 - d02;
+        });
+
+        return toIndexes[0];
+    }
+    function dump(_map) {
+        var size = _map.length;
+        var dbg = "";
+        for (i = 0; i < size; i++) {
+            if (i % width === 0) {
+                dbg += "\n";
+            }
+            dbg += "|";
+            if (_map[i] < 10) dbg += " ";
+            if (_map[i] < 100) dbg += " ";
+            dbg += "" + _map[i];
+        }
+        console.log(dbg);
+    }
+    /**
+     * Поиск пути волновым методом
+     * @param fromIdx откуда
+     * @param toIdx куда
+     * @returns массив индексов через которые нужно пройти, [] если никуда ходить не надо, undefined если пути нет
+     */
+    function path(fromIdx, toIdx) {
+        fromIdx = idxMove(fromIdx, 0, 0);
+        toIdx = idxMove(toIdx, 0, 0);
+        var size = map.length;
+        var tmp = new Array(size); // массив для поиска
+        var i;
+
+        if (fromIdx === toIdx) {
+            return [];
+        }
+
+        for (i = 0; i < size; i++) {
+            tmp[i] = 0;
+        }
+        tmp[fromIdx] = 1;
+        tmp[toIdx] = size;
+
+        //dump(tmp);
+
+        var n = 1;
+
+        // заполняем массив значениями дальности от исходной точки
+        wave: while (true) {
+            for (i = 0; i < size; i++) {
+                if (
+                    tmp[idxMove(i, 0, 1)] === n ||
+                    tmp[idxMove(i, 0, -1)] === n ||
+                    tmp[idxMove(i, 1, 0)] === n ||
+                    tmp[idxMove(i, -1, 0)] === n
+                ) {
+                    if (tmp[i] === 0 && map[i] !== 1) {
+                        tmp[i] = n + 1;
+                    }
+                    if (tmp[i] === size) {
+                        break wave;
+                    }
+                }
+
+            }
+            n++;
+            if (n > size) {
+                return undefined;
+            }
+        }
+
+        for (i = 0; i < size; i++) {
+            if (tmp[i] === n + 1) {
+                tmp[i] = 0;
+            }
+        }
+
+        //dump(tmp);
+
+        // откатываем все значения из массива, кроме пути
+        var p = [toIdx]; // последний элемент - целевая клетка
+        while (n > 1) {
+            var added = false;
+            for (i = 0; i < size; i++) {
+                if (
+                    tmp[i] === n
+                ) {
+                    if (added) {
+                        tmp[i] = 0;
+                    } else if (tmp[idxMove(i, 0, 1)] === n + 1 || tmp[idxMove(i, 0, 1)] === size ||
+                        tmp[idxMove(i, 0, -1)] === n + 1 || tmp[idxMove(i, 0, -1)] === size ||
+                        tmp[idxMove(i, 1, 0)] === n + 1 || tmp[idxMove(i, 1, 0)] === size ||
+                        tmp[idxMove(i, -1, 0)] === n + 1 || tmp[idxMove(i, -1, 0)] === size
+                    ) {
+                        p.unshift(i);
+                        added = true;
+                    } else {
+                        tmp[i] = 0;
+                    }
+                }
+
+            }
+            n--;
+        }
+
+        //dump(tmp);
+
+        return p;
+    }
+
+    // **** Старт сессии ****
+
+    auth();
+    size();
+    start();
+
+
+    // **** Поехали ****
+
+    var step = 0;
+
+    function loop() {
+        ajax("/look/" + key, function (data) {
+            console.log("step " + step++);
+
+            map = JSON.parse(data);
+
+            var me = find(myId);
+            var greens = findAll(2);
+            var gr = nearest(me, greens);
+
+            var myX = idxToX(me);
+            var myY = idxToY(me);
+            var grX = idxToX(gr);
+            var grY = idxToY(gr);
+
+            var p = path(me, gr);
+
+
+            if (p === undefined) {
+                // no way
+                setTimeout(loop, timeout + 50);
+                return;
+            } else if (p.length === 0) {
+                // go into gr
+                p.push(gr);
+            }
+
+            var next = p[0];
+
+            var nextX = idxToX(next);
+            var nextY = idxToY(next);
+
+            if (nextX > myX) {
+                right();
+            } else if (nextX < myX) {
+                left();
+            } else if (nextY > myY) {
+                down();
+            } else if (nextY < myY) {
+                up();
+            }
+
+            setTimeout(loop, timeout + 50);
+        });
+        return false;
+    }
+
+    setTimeout(loop, timeout + 50);
+
+</textarea>
+</form>
+
+<script>
+    var textarea = document.getElementById("code");
+
+    var saved = localStorage.getItem("js");
+    if (saved) {
+        textarea.value = saved;
+    }
+
+    var editor = CodeMirror.fromTextArea(textarea, {
+        mode: "javascript",
+        matchBrackets: true,
+        json: true,
+        styleActiveLine: true,
+        lineNumbers: true,
+        lineWrapping: true,
+        fullScreen: true,
+        extraKeys: {
+            "F11": function (cm) {
+                cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+            }
+        }
+    });
+
+    editor.on("change", function (cm, change) {
+        localStorage.setItem('js', editor.getValue());
+    });
+
+    var node = document.getElementById("panel");
+    editor.addPanel(node, {position: "top", stable: true});
+
+    function runCode() {
+        var newWin = open('about:blank', 'runCodeWindow', 'height=300,width=300');
+        newWin.document.write("\<html\>\<body\>Running code...\<script\>" + editor.getValue() + "<" + "/script\>");
+    }
+
+    function resetCode() {
+        localStorage.removeItem("js");
+        location.reload();
+    }
+</script>
+

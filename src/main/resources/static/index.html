@@ -21,13 +21,15 @@
 <p>
     После каждого действия нужна перезарядка.
     Например если заяц двигается на пустую клетку,
-    то API вернет 100 - это значит что следующий запрос можно отправить не раньше чем через 100мс.
-    Толкание предметов отнимает 100 + 50*N (где N - количество предметов).
+    то API вернет 50 - это значит что следующий запрос можно отправить не раньше чем через 50мс.
+    Толкание предметов отнимает 50 + 20*N (где N - количество предметов).
     А если заяц врежется в дерево, то перезарядка будет 500мс.
 </p>
 <p>
     Игровой раунд длится 3 минуты. Каждая капуста, отправленная в нору приносит 1 очко.
     Максимальное количество очков, набранное за раунд, отображается в таблице рекордов.
+    Текущее количество очков можно посмотреть в мобильной версии или в полноэкранном режиме.
+    API и примеры кода смотрите ниже.
 </p>
 
 <p>
@@ -45,11 +47,26 @@
 
 <img src="/scr.png"/>
 <ul style="list-style-type: none;">
-    <li><pre style="display: inline; color: red">#</pre> - препятствие</li>
-    <li><pre style="display: inline; color: lime">$</pre> - капуста</li>
-    <li><pre style="display: inline; color: green">.</pre> - свободное место</li>
-    <li><pre style="display: inline; color: white">Z</pre> - заяц</li>
-    <li><pre style="display: inline; color: white">O</pre> - нора</li>
+    <li>
+        <pre style="display: inline; color: red">#</pre>
+        - препятствие
+    </li>
+    <li>
+        <pre style="display: inline; color: lime">$</pre>
+        - капуста
+    </li>
+    <li>
+        <pre style="display: inline; color: green">.</pre>
+        - свободное место
+    </li>
+    <li>
+        <pre style="display: inline; color: white">Z</pre>
+        - заяц
+    </li>
+    <li>
+        <pre style="display: inline; color: white">O</pre>
+        - нора
+    </li>
 </ul>
 
 <h3>API</h3>
@@ -62,25 +79,30 @@
 </p>
 <ul style="list-style-type: none;">
     <li>
-        <code style="color: cornflowerblue">/auth/&lt;ключ&gt;</code> - возвращает ID зайца (например "102" - белый заяц, находится в клетке со значением 102)
+        <code style="color: cornflowerblue">/auth/&lt;ключ&gt;</code> - возвращает ID зайца (например "102" - белый
+        заяц, находится в клетке со значением 102)
     </li>
     <li>
-        <code style="color: cornflowerblue">/start/&lt;ключ&gt;</code> - начинает игровой раунд и возвращает его длительность в миллисекундах
+        <code style="color: cornflowerblue">/start/&lt;ключ&gt;</code> - начинает игровой раунд и возвращает его
+        длительность в миллисекундах
     </li>
     <li>
-        <code style="color: cornflowerblue">/session/&lt;ключ&gt;</code> - возвращает оставшееся время игрового раунда в миллисекундах
+        <code style="color: cornflowerblue">/session/&lt;ключ&gt;</code> - возвращает оставшееся время игрового раунда в
+        миллисекундах
     </li>
     <li>
         &nbsp;
     </li>
     <li>
-        <code style="color: cornflowerblue">/size/&lt;ключ&gt;</code> - возвращает массив размерностей поля (например "[50, 25]" - 50 клеток в ширину и 25 в высоту)
+        <code style="color: cornflowerblue">/size/&lt;ключ&gt;</code> - возвращает массив размерностей поля (например
+        "[50, 25]" - 50 клеток в ширину и 25 в высоту)
     </li>
     <li>
-        <code style="color: cornflowerblue">/look/&lt;ключ&gt;</code> - возвращает массив всех клеток поля (например "[0, 0, 1, 1, 0, 2, 155, ...]")
+        <code style="color: cornflowerblue">/look/&lt;ключ&gt;</code> - возвращает массив всех клеток поля (например
+        "[0, 0, 1, 1, 0, 2, 155, ...]")
         <ul style="list-style-type: none;">
             <li>Клетки каждой строки идут друг за другом, строки ничем не разделяются</li>
-            <li>Запрашивать карту можно не чаще раза в 100мс</li>
+            <li>Карта обновляется раз в 100мс</li>
             <li><code>0</code> - пустая клетка</li>
             <li><code>1</code> - препятствие</li>
             <li><code>2</code> - капуста</li>
@@ -92,16 +114,20 @@
         &nbsp;
     </li>
     <li>
-        <code style="color: cornflowerblue">/up/&lt;ключ&gt;</code> - переместить зайца на клетку вверх, возвращает время перезарядки или "-1".
+        <code style="color: cornflowerblue">/up/&lt;ключ&gt;</code> - переместить зайца на клетку вверх, возвращает
+        время перезарядки в мс или "-1", если заяц еще не перезарядился с прошлого хода.
     </li>
     <li>
-        <code style="color: cornflowerblue">/right/&lt;ключ&gt;</code> - переместить зайца на клетку вправо, возвращает время перезарядки или "-1".
+        <code style="color: cornflowerblue">/right/&lt;ключ&gt;</code> - переместить зайца на клетку вправо, возвращает
+        время перезарядки в мс или "-1", если заяц еще не перезарядился с прошлого хода.
     </li>
     <li>
-        <code style="color: cornflowerblue">/down/&lt;ключ&gt;</code> - переместить зайца на клетку вниз, возвращает время перезарядки или "-1".
+        <code style="color: cornflowerblue">/down/&lt;ключ&gt;</code> - переместить зайца на клетку вниз, возвращает
+        время перезарядки в мс или "-1", если заяц еще не перезарядился с прошлого хода.
     </li>
     <li>
-        <code style="color: cornflowerblue">/left/&lt;ключ&gt;</code> - переместить зайца на клетку влево, возвращает время перезарядки или "-1".
+        <code style="color: cornflowerblue">/left/&lt;ключ&gt;</code> - переместить зайца на клетку влево, возвращает
+        время перезарядки в мс или "-1", если заяц еще не перезарядился с прошлого хода.
     </li>
 </ul>
 <p>
@@ -125,3 +151,11 @@
     </li>
 </ul>
 
+<p>
+    <a href="/code/js.html" style="color: skyblue">Пример бота на JavaScript</a>
+</p>
+<p>
+    <a href="/code/java.html" style="color: skyblue">Пример бота на Java</a>
+</p>
+
+<br/><br/><br/><br/><br/><br/>

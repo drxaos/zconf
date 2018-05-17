@@ -30,10 +30,10 @@ public class Game {
     public static final int ANS_TREE_BUMP = -2; // удар об дерево
     public static final int ANS_ERROR = -3; // ошибка
 
-    public static final int WAIT_STEP = 100; // базовый таймаут
-    public static final int WAIT_PUSH = 50; // дополнительный таймаут на каждый объект
+    public static final int WAIT_STEP = 50; // базовый таймаут
+    public static final int WAIT_PUSH = 20; // дополнительный таймаут на каждый объект
     public static final int WAIT_TREE = 500; // таймаут после попадания в дерево
-    public static final int WAIT_LOOK = 100; // таймаут после просмотра карты
+    public static final int WAIT_LOOK = 25; // таймаут после просмотра карты
 
     protected final int H; // ширина карты
     protected final int W; // высота карты

@@ -14,5 +14,9 @@ public class InitManager implements Manager {
     @Override
     public void manage(Game.State state) {
         level.generate(state, db.getActiveSessions());
+
+        for (Integer zid : db.getActiveSessions()) {
+            level.addZ(state, zid);
+        }
     }
 }
