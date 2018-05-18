@@ -27,6 +27,18 @@ public class RandomLevel implements Level {
                 (int) (r.nextDouble() * game.getW() / 5) + game.getW() / 5 * 3,
                 (int) (r.nextDouble() * game.getH() / 5) + game.getH() / 5 * 3));
 
+
+        Point[] trees = new Point[8];
+        points.add(trees[0] = new Point(o1.x + 6, o1.y));
+        points.add(trees[1] = new Point(o1.x - 4, o1.y));
+        points.add(trees[2] = new Point(o1.x, o1.y + 3));
+        points.add(trees[3] = new Point(o1.x, o1.y - 2));
+
+        points.add(trees[4] = new Point(o2.x + 3, o2.y));
+        points.add(trees[5] = new Point(o2.x - 7, o2.y));
+        points.add(trees[6] = new Point(o2.x, o2.y + 3));
+        points.add(trees[7] = new Point(o2.x, o2.y - 5));
+
         while (points.size() < treeCount + gCount + z.size() + 2) {
             points.add(new Point((int) (r.nextDouble() * (game.getW() - 4)) + 2, (int) (r.nextDouble() * (game.getH() - 4)) + 2));
         }
@@ -40,6 +52,13 @@ public class RandomLevel implements Level {
         Collections.shuffle(list);
 
         int t = 0, g = 0;
+        for (int i = 0; i < trees.length; i++) {
+            Point p = trees[i];
+            list.remove(p);
+            state.set(p.x, p.y, Game.TREE);
+            t++;
+        }
+
         for (Point p : list) {
             if (t < treeCount) {
                 state.set(p.x, p.y, Game.TREE);
@@ -62,7 +81,7 @@ public class RandomLevel implements Level {
 
         Set<Point> points = new HashSet<>();
         while (points.size() < count) {
-            Point point = new Point((int) (r.nextDouble() * game.getW()), (int) (r.nextDouble() * game.getH()));
+            Point point = new Point((int) (r.nextDouble() * (game.getW() - 4)) + 2, (int) (r.nextDouble() * (game.getH() - 4)) + 2);
             if (state.get(point.x, point.y) == Game.EMPTY) {
                 points.add(point);
             }
@@ -77,7 +96,7 @@ public class RandomLevel implements Level {
         Game game = state.getGame();
 
         while (true) {
-            Point point = new Point((int) (r.nextDouble() * game.getW()), (int) (r.nextDouble() * game.getH()));
+            Point point = new Point((int) (r.nextDouble() * (game.getW() - 4)) + 2, (int) (r.nextDouble() * (game.getH() - 4)) + 2);
             if (state.get(point.x, point.y) == Game.EMPTY) {
                 state.set(point.x, point.y, zid);
                 break;

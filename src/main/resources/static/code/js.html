@@ -14,6 +14,97 @@
   <textarea id="code" name="code">
 
 
+    var key = "ВПИШИТЕ КЛЮЧ СЮДА";
+
+    var baseUrl = "http://localhost:9999" // базовый урл
+
+
+    // **** Текущее состояние ****
+
+    var myId = -1;
+    var timeout = 1000;
+    var map, width, height;
+
+
+    // **** Старт сессии ****
+
+    auth();
+    size();
+    start();
+
+
+    // **** Поехали ****
+
+    var step = 0;
+
+    function loop() {
+        ajax("/look/" + key, function (data) {
+
+            // этот бот бесконечно бегает за ближайшей капустой
+            // а нужно, чтобы он закатывал ее в норы
+
+
+            console.log("step " + step++);
+
+            // парсим карту в одномерный массив
+            map = JSON.parse(data);
+
+            // получаем индекс себя на карте
+            var me = find(myId);
+
+            // ищем индексы всех капуст на карте
+            var greens = findAll(2);
+
+            // ищем ближайшую капусту
+            var gr = nearest(me, greens);
+
+            // извлекаем координаты из индекса
+            var myX = idxToX(me);
+            var myY = idxToY(me);
+            var grX = idxToX(gr);
+            var grY = idxToY(gr);
+
+            // а вот так можно преобразовать координаты в индекс
+            me = xyToIdx(myX, myY);
+
+            // поиск кратчайшего пути из первой точки во вторую
+            // возвращает все индексы клеток, включая конечную, но не включая начальную
+            var p = path(me, gr);
+
+
+            if (p === undefined) { // путь не найден
+                setTimeout(loop, timeout + 50);
+                return;
+            } else if (p.length === 0) { // me == gr
+                // ¯\_(ツ)_/¯
+            }
+
+            // берем точку рядом с нами
+            var next = p[0];
+            var nextX = idxToX(next);
+            var nextY = idxToY(next);
+
+            // и выбираем как в нее шагнуть
+            if (nextX > myX) {
+                right();
+            } else if (nextX < myX) {
+                left();
+            } else if (nextY > myY) {
+                down();
+            } else if (nextY < myY) {
+                up();
+            }
+
+            // ждем (переменная timeout обновляется в обработчике шага)
+            setTimeout(loop, timeout + 50);
+        });
+        return false;
+    }
+
+    setTimeout(loop, timeout + 50);
+
+
+
     // **** Взаимодействие с API ****
 
     function ajax(url, callback) {
@@ -22,19 +113,9 @@
             if (this.readyState === 4 && this.status === 200)
                 callback && callback(this.responseText);
         };
-        xmlHTTP.open("GET", url, true);
+        xmlHTTP.open("GET", baseUrl + url, true);
         xmlHTTP.send();
     }
-
-
-
-    // **** Текущее состояние ****
-
-    var key = "12345";
-    var myId = -1;
-    var timeout = 1000;
-    var map, width, height;
-
 
 
     // **** Вспомогательные функции ****
@@ -134,6 +215,7 @@
         }
         console.log(dbg);
     }
+
     /**
      * Поиск пути волновым методом
      * @param fromIdx откуда
@@ -224,66 +306,6 @@
         return p;
     }
 
-    // **** Старт сессии ****
-
-    auth();
-    size();
-    start();
-
-
-    // **** Поехали ****
-
-    var step = 0;
-
-    function loop() {
-        ajax("/look/" + key, function (data) {
-            console.log("step " + step++);
-
-            map = JSON.parse(data);
-
-            var me = find(myId);
-            var greens = findAll(2);
-            var gr = nearest(me, greens);
-
-            var myX = idxToX(me);
-            var myY = idxToY(me);
-            var grX = idxToX(gr);
-            var grY = idxToY(gr);
-
-            var p = path(me, gr);
-
-
-            if (p === undefined) {
-                // no way
-                setTimeout(loop, timeout + 50);
-                return;
-            } else if (p.length === 0) {
-                // go into gr
-                p.push(gr);
-            }
-
-            var next = p[0];
-
-            var nextX = idxToX(next);
-            var nextY = idxToY(next);
-
-            if (nextX > myX) {
-                right();
-            } else if (nextX < myX) {
-                left();
-            } else if (nextY > myY) {
-                down();
-            } else if (nextY < myY) {
-                up();
-            }
-
-            setTimeout(loop, timeout + 50);
-        });
-        return false;
-    }
-
-    setTimeout(loop, timeout + 50);
-
 </textarea>
 </form>
 
@@ -311,7 +333,11 @@
     });
 
     editor.on("change", function (cm, change) {
-        localStorage.setItem('js', editor.getValue());
+        if (editor.getValue()) {
+            localStorage.setItem('js', editor.getValue());
+        } else {
+            localStorage.removeItem("js");
+        }
     });
 
     var node = document.getElementById("panel");
@@ -322,9 +348,5 @@
         newWin.document.write("\<html\>\<body\>Running code...\<script\>" + editor.getValue() + "<" + "/script\>");
     }
 
-    function resetCode() {
-        localStorage.removeItem("js");
-        location.reload();
-    }
 </script>
 

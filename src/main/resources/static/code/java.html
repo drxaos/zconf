@@ -23,11 +23,106 @@ import java.util.stream.Collectors;
 
 public class Bot {
 
+    String key = "ВПИШИТЕ КЛЮЧ СЮДА";
+
+    String baseUrl = "http://localhost:9999"; // базовый урл
+
+    // **** Текущее состояние ****
+
+    int myId = -1;
+    int timeout = 1000;
+    List&lt;Integer&gt; map;
+    int width, height;
+
+
+    // **** Поехали ****
+
+    int step = 0;
+
+    void loop() {
+        ajax("/look/" + key, (data) -> {
+
+            // этот бот бесконечно бегает за ближайшей капустой
+            // а нужно, чтобы он закатывал ее в норы
+
+
+            System.out.println("step " + step++);
+
+            // парсим карту в одномерный массив
+            map = parseArray(data);
+
+            // получаем индекс себя на карте
+            int me = find(myId);
+
+            // ищем индексы всех капуст на карте
+            List&lt;Integer&gt; greens = findAll(2);
+
+            // ищем ближайшую капусту
+            int gr = nearest(me, greens);
+
+            // извлекаем координаты из индекса
+            int myX = idxToX(me);
+            int myY = idxToY(me);
+            int grX = idxToX(gr);
+            int grY = idxToY(gr);
+
+            // а вот так можно преобразовать координаты в индекс
+            me = xyToIdx(myX, myY);
+
+            // поиск кратчайшего пути из первой точки во вторую
+            // возвращает все индексы клеток, включая конечную, но не включая начальную
+            List&lt;Integer&gt; p = path(me, gr);
+
+
+            if (p == null) { // путь не найден
+                return;
+            } else if (p.size() == 0) { // me == gr
+                // ¯\_(ツ)_/¯
+            }
+
+            // берем точку рядом с нами
+            int next = p.get(0);
+            int nextX = idxToX(next);
+            int nextY = idxToY(next);
+
+            // и выбираем как в нее шагнуть
+            if (nextX > myX) {
+                right();
+            } else if (nextX < myX) {
+                left();
+            } else if (nextY > myY) {
+                down();
+            } else if (nextY < myY) {
+                up();
+            }
+
+        });
+    }
+
+    public void run() throws InterruptedException {
+        // **** Старт сессии ****
+        auth();
+        size();
+        start();
+
+        while (true) {
+            Thread.sleep(timeout + 50);
+            try {
+                loop();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        new Bot().run();
+    }
+
     interface Callback {
         void call(String data);
     }
 
-    String baseUrl = "http://localhost:9999";
 
     // **** Взаимодействие с API ****
 
@@ -50,15 +145,6 @@ public class Bot {
     List&lt;Integer&gt; parseArray(String json) {
         return Arrays.stream(json.split("[^0-9-]+")).filter((s) -> !s.isEmpty()).map((s) -> Integer.parseInt(s)).collect(Collectors.toList());
     }
-
-    // **** Текущее состояние ****
-
-    String key = "XVSWCVAXON";
-    int myId = -1;
-    int timeout = 1000;
-    List&lt;Integer&gt; map;
-    int width, height;
-
 
     // **** Вспомогательные функции ****
 
@@ -268,74 +354,6 @@ public class Bot {
         return p;
     }
 
-
-    // **** Поехали ****
-
-    int step = 0;
-
-    void loop() {
-        ajax("/look/" + key, (data) -> {
-            System.out.println("step " + step++);
-
-            map = parseArray(data);
-
-            int me = find(myId);
-            List&lt;Integer&gt; greens = findAll(2);
-            int gr = nearest(me, greens);
-
-            int myX = idxToX(me);
-            int myY = idxToY(me);
-            int grX = idxToX(gr);
-            int grY = idxToY(gr);
-
-            List&lt;Integer&gt; p = path(me, gr);
-
-
-            if (p == null) {
-                // no way
-                return;
-            } else if (p.size() == 0) {
-                // go into gr
-                p.add(gr);
-            }
-
-            int next = p.get(0);
-
-            int nextX = idxToX(next);
-            int nextY = idxToY(next);
-
-            if (nextX > myX) {
-                right();
-            } else if (nextX < myX) {
-                left();
-            } else if (nextY > myY) {
-                down();
-            } else if (nextY < myY) {
-                up();
-            }
-
-        });
-    }
-
-    public void run() throws InterruptedException {
-        // **** Старт сессии ****
-        auth();
-        size();
-        start();
-
-        while (true) {
-            Thread.sleep(timeout + 50);
-            try {
-                loop();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public static void main(String[] args) throws InterruptedException {
-        new Bot().run();
-    }
 }
 
 </textarea>
